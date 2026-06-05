@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls ~/.claude/skills 2>/dev/null || echo \"NOT_FOUND\")",
+      "Bash(mkdir -p ~/.claude/skills/frontend-design)",
+      "Bash(gh api *)"
+    ]
+  }
+}
