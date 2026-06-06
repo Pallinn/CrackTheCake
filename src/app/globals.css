@@ -1,26 +1,205 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Fredoka+One&family=Sarabun:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
+/* ── CrackTheCake brand tokens ── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --cherry: #C62828;
+  --strawberry: #D32F2F;
+  --cream: #F8F1E5;
+  --vanilla: #FFF4D6;
+  --beige: #E8D4B0;
+  --butter: #FFD54F;
+  --golden: #FBC02D;
+  --background: #FFF8EE;
+  --foreground: #2C1810;
+
+  /* Story quiz tokens */
+  --paper: #f0ede4;
+  --ink: #2C5F2E;
+  --ink-light: #4a8a4d;
+  --ink-faint: rgba(44,95,46,0.15);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+* { box-sizing: border-box; }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Nunito', sans-serif;
+  overflow-x: hidden;
 }
+
+/* ── Story quiz paper body override ── */
+body.paper-mode {
+  background: var(--paper);
+  font-family: 'Sarabun', sans-serif;
+}
+
+/* ── Brand animations ── */
+@keyframes float {
+  0%,100% { transform: translateY(0) rotate(0deg); }
+  33%      { transform: translateY(-10px) rotate(3deg); }
+  66%      { transform: translateY(-5px) rotate(-2deg); }
+}
+@keyframes floatReverse {
+  0%,100% { transform: translateY(0) rotate(0deg); }
+  33%      { transform: translateY(8px) rotate(-3deg); }
+  66%      { transform: translateY(3px) rotate(2deg); }
+}
+@keyframes pulse-soft {
+  0%,100% { transform: scale(1); opacity: .7; }
+  50%      { transform: scale(1.1); opacity: 1; }
+}
+@keyframes twinkle {
+  0%,100% { opacity: .3; transform: scale(.8); }
+  50%      { opacity: 1;  transform: scale(1.2); }
+}
+@keyframes bounce-gentle {
+  0%,100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes wiggle {
+  0%,100% { transform: rotate(-3deg); }
+  50%      { transform: rotate(3deg); }
+}
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* story-specific */
+@keyframes blink-in {
+  0%   { opacity: 0; }
+  50%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes draw-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fade-blur-in {
+  from { opacity: 0; filter: blur(6px); }
+  to   { opacity: 1; filter: blur(0); }
+}
+@keyframes choice-in {
+  from { opacity: 0; transform: translateX(-12px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.animate-float         { animation: float 4s ease-in-out infinite; }
+.animate-float-reverse { animation: floatReverse 5s ease-in-out infinite; }
+.animate-float-slow    { animation: float 6s ease-in-out infinite; }
+.animate-pulse-soft    { animation: pulse-soft 3s ease-in-out infinite; }
+.animate-spin-slow     { animation: spin-slow 12s linear infinite; }
+.animate-twinkle       { animation: twinkle 2s ease-in-out infinite; }
+.animate-bounce-gentle { animation: bounce-gentle 2.5s ease-in-out infinite; }
+.animate-slide-up      { animation: slide-up .6s ease-out forwards; }
+.animate-wiggle        { animation: wiggle 2s ease-in-out infinite; }
+.animate-draw-in       { animation: draw-in .5s ease-out forwards; }
+.animate-fade-blur-in  { animation: fade-blur-in .8s ease-out forwards; }
+.animate-choice-in     { animation: choice-in .4s ease-out forwards; }
+
+.delay-100  { animation-delay: .1s; }
+.delay-200  { animation-delay: .2s; }
+.delay-300  { animation-delay: .3s; }
+.delay-400  { animation-delay: .4s; }
+.delay-500  { animation-delay: .5s; }
+.delay-600  { animation-delay: .6s; }
+.delay-700  { animation-delay: .7s; }
+.delay-800  { animation-delay: .8s; }
+.delay-1000 { animation-delay: 1s; }
+.delay-1500 { animation-delay: 1.5s; }
+.delay-2000 { animation-delay: 2s; }
+
+/* ── Landing page component styles ── */
+.cream-border {
+  border: 3px solid var(--beige);
+  box-shadow: 0 8px 32px rgba(198,40,40,.08), 0 2px 8px rgba(198,40,40,.05);
+}
+.frosting-card {
+  background: linear-gradient(145deg,#fff,#FFF4D6);
+  border: 2.5px solid #E8D4B0;
+  box-shadow: 0 20px 60px rgba(198,40,40,.1), 0 4px 16px rgba(198,40,40,.06),
+              inset 0 1px 0 rgba(255,255,255,.8);
+}
+.cta-button {
+  background: var(--cream);
+  border: 3px solid var(--cherry);
+  color: var(--cherry);
+  transition: all .25s cubic-bezier(.34,1.56,.64,1);
+  box-shadow: 0 4px 0 #9B1C1C, 0 6px 20px rgba(198,40,40,.2);
+}
+.cta-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 7px 0 #9B1C1C, 0 12px 28px rgba(198,40,40,.3);
+  background: #FFF8EE;
+}
+.cta-button:active {
+  transform: translateY(1px);
+  box-shadow: 0 2px 0 #9B1C1C, 0 4px 12px rgba(198,40,40,.2);
+}
+
+/* ── Story quiz component styles ── */
+.paper-bg {
+  min-height: 100vh;
+  background-color: var(--paper);
+  background-image:
+    radial-gradient(ellipse 80% 60% at 15% 25%, rgba(0,0,0,.025) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 80% at 85% 75%, rgba(44,95,46,.12) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 40% at 50% 50%, rgba(0,0,0,.01) 0%, transparent 70%);
+  font-family: 'Sarabun', sans-serif;
+}
+
+.ink-btn {
+  background: var(--ink);
+  color: white;
+  font-family: 'Sarabun', sans-serif;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: .55rem 1.6rem;
+  border: none;
+  cursor: pointer;
+  transition: all .2s ease;
+  box-shadow: 0 3px 0 #1a3d1c;
+}
+.ink-btn:hover  { transform: translateY(-2px); box-shadow: 0 5px 0 #1a3d1c; }
+.ink-btn:active { transform: translateY(1px);  box-shadow: 0 1px 0 #1a3d1c; }
+
+.story-text {
+  font-family: 'Sarabun', sans-serif;
+  color: #2a2a2a;
+  line-height: 1.85;
+  font-size: 1.05rem;
+}
+
+/* Input sketch style */
+.sketch-input {
+  background: transparent;
+  border: none;
+  border-bottom: 2.5px solid var(--ink);
+  outline: none;
+  font-family: 'Sarabun', sans-serif;
+  font-size: 1.1rem;
+  color: #1a1a1a;
+  width: 100%;
+  padding: .4rem .2rem;
+  transition: border-color .2s;
+}
+.sketch-input::placeholder { color: #aaa; }
+.sketch-input:focus { border-bottom-color: var(--ink-light); }
+
+/* Choice hover state */
+.choice-box {
+  transition: all .2s ease;
+  cursor: pointer;
+  font-family: 'Sarabun', sans-serif;
+}
+.choice-box:hover { transform: translateX(4px); }
