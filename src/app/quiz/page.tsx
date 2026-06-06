@@ -35,7 +35,7 @@ function WarningScreen({ onNext }: { onNext: () => void }) {
     <div className="flex items-center justify-center min-h-screen p-6 paper-bg">
       <div className="w-full max-w-md animate-fade-blur-in">
         <SketchBox className="p-10">
-          <h2 className="text-center font-bold text-xl mb-5" style={{ color: "#2C5F2E", fontFamily: "'Sarabun', sans-serif" }}>
+          <h2 className="text-center font-bold text-xl mb-5" style={{ color: "#C62828", fontFamily: "'Sarabun', sans-serif" }}>
             คำเตือน
           </h2>
           <div className="story-text text-center space-y-3 text-sm leading-loose" style={{ color: "#333" }}>
@@ -66,7 +66,7 @@ function NameScreen({ onNext }: { onNext: (name: string) => void }) {
         </p>
         <div className="space-y-8 mb-10">
           <div>
-            <label className="story-text text-base font-semibold block mb-2" style={{ color: "#2C5F2E" }}>ชื่อ</label>
+            <label className="story-text text-base font-semibold block mb-2" style={{ color: "#C62828" }}>ชื่อ</label>
             <input
               value={name}
               onChange={e => setName(e.target.value)}
@@ -75,7 +75,7 @@ function NameScreen({ onNext }: { onNext: (name: string) => void }) {
             />
           </div>
           <div>
-            <label className="story-text text-base font-semibold block mb-2" style={{ color: "#2C5F2E" }}>อายุ</label>
+            <label className="story-text text-base font-semibold block mb-2" style={{ color: "#C62828" }}>อายุ</label>
             <input
               value={age}
               onChange={e => setAge(e.target.value)}
@@ -124,7 +124,7 @@ function SceneScreen({
               key={i}
               className="story-text animate-draw-in mb-1"
               style={{
-                color: line.startsWith('"') ? "#2C5F2E" : "#2a2a2a",
+                color: line.startsWith('"') ? "#C62828" : "#2a2a2a",
                 fontStyle: line.startsWith('"') ? "italic" : "normal",
                 fontWeight: line.startsWith('"') ? 600 : 400,
                 fontSize: line === "" ? "0.4rem" : "1rem",
@@ -165,13 +165,13 @@ function QuestionScreen({
       <div className="w-full max-w-sm animate-slide-up">
         {/* Progress */}
         <div className="flex items-center gap-2 mb-6">
-          <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: "rgba(44,95,46,0.15)" }}>
+          <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: "rgba(198,40,40,0.12)" }}>
             <div
               className="h-full rounded-full transition-all duration-500"
-              style={{ width: `${(questionNumber / totalQuestions) * 100}%`, background: "#2C5F2E" }}
+              style={{ width: `${(questionNumber / totalQuestions) * 100}%`, background: "#C62828" }}
             />
           </div>
-          <span className="text-xs font-semibold" style={{ color: "#2C5F2E", fontFamily: "'Sarabun',sans-serif" }}>
+          <span className="text-xs font-semibold" style={{ color: "#C62828", fontFamily: "'Sarabun',sans-serif" }}>
             {questionNumber}/{totalQuestions}
           </span>
         </div>
@@ -195,7 +195,7 @@ function QuestionScreen({
               >
                 <span
                   className="story-text text-sm leading-relaxed"
-                  style={{ color: selected === c.cake ? "#2C5F2E" : "#2a2a2a", fontWeight: selected === c.cake ? 600 : 400 }}
+                  style={{ color: selected === c.cake ? "#C62828" : "#2a2a2a", fontWeight: selected === c.cake ? 600 : 400 }}
                 >
                   {c.text}
                 </span>
@@ -246,14 +246,14 @@ function EndingScreen({ name, onReveal }: { name: string; onReveal: () => void }
                 <feDisplacementMap in="SourceGraphic" scale="2.5"/>
               </filter>
             </defs>
-            <g filter="url(#sk-end)" stroke="#2C5F2E" strokeLinecap="round">
-              <rect x="20" y="100" width="120" height="48" rx="10" strokeWidth="2" fill="rgba(44,95,46,.06)"/>
+            <g filter="url(#sk-end)" stroke="#C62828" strokeLinecap="round">
+              <rect x="20" y="100" width="120" height="48" rx="10" strokeWidth="2" fill="rgba(198,40,40,.06)"/>
               <path d="M20 100 Q30 86 40 100 Q50 86 60 100 Q70 86 80 100 Q90 86 100 100 Q110 86 120 100 Q130 86 140 100" strokeWidth="2" fill="none"/>
-              <rect x="38" y="62" width="84" height="42" rx="8" strokeWidth="2" fill="rgba(44,95,46,.07)"/>
+              <rect x="38" y="62" width="84" height="42" rx="8" strokeWidth="2" fill="rgba(198,40,40,.07)"/>
               <path d="M38 62 Q46 50 54 62 Q62 50 70 62 Q78 50 86 62 Q94 50 102 62 Q110 50 118 62 Q122 50 122 62" strokeWidth="1.8" fill="none"/>
-              <rect x="55" y="30" width="50" height="36" rx="6" strokeWidth="2" fill="rgba(44,95,46,.08)"/>
+              <rect x="55" y="30" width="50" height="36" rx="6" strokeWidth="2" fill="rgba(198,40,40,.08)"/>
               <path d="M55 30 Q61 20 67 30 Q73 20 79 30 Q85 20 91 30 Q97 20 105 30" strokeWidth="1.6" fill="none"/>
-              <ellipse cx="80" cy="26" rx="22" ry="10" strokeWidth="1.8" fill="rgba(44,95,46,.05)"/>
+              <ellipse cx="80" cy="26" rx="22" ry="10" strokeWidth="1.8" fill="rgba(198,40,40,.05)"/>
               <line x1="80" y1="16" x2="80" y2="2" strokeWidth="2"/>
               <path d="M80 0 Q85 -4 83 2 Q80 6 77 2 Q75 -4 80 0Z" strokeWidth="1" fill="rgba(251,192,45,.3)"/>
               {[40,60,80,100,120].map((x,i)=><circle key={i} cx={x} cy={118} r="3" strokeWidth="1.5" fill="rgba(251,192,45,.2)"/>)}
@@ -270,7 +270,7 @@ function EndingScreen({ name, onReveal }: { name: string; onReveal: () => void }
               style={{
                 fontSize: i === 0 ? "1.25rem" : "1rem",
                 fontWeight: i === 0 ? 700 : 400,
-                color: i === 0 ? "#2C5F2E" : "#2a2a2a",
+                color: i === 0 ? "#C62828" : "#2a2a2a",
                 marginBottom: line === "" ? "0.5rem" : "0.15rem",
                 animationFillMode: "both",
               }}

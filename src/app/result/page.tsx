@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { Suspense } from "react";
+import { Suspense, type ReactElement } from "react";
 import type { CakeType } from "../quiz/data";
 
 // ── Personality data ─────────────────────────────────────────────────────────
@@ -65,7 +65,7 @@ function CakeIllustration({ type, color }: { type: CakeType; color: string }) {
   const c = color;
   const light = "rgba(255,255,255,0.6)";
 
-  const drawingsMap: Record<CakeType, JSX.Element> = {
+  const drawingsMap: Record<CakeType, ReactElement> = {
     vanilla: (
       <g>
         <rect x="30" y="95"  width="100" height="50" rx="14" fill={c} opacity=".85"/>

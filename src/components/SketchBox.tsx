@@ -1,7 +1,9 @@
 "use client";
-import { useRef, useState, useEffect, ReactNode } from "react";
+import { useRef, useState, useEffect, ReactNode, useId } from "react";
 
 export function SketchBox({ children, className = "" }: { children: ReactNode; className?: string }) {
+  const uid = useId().replace(/:/g, "");
+  const filterId = `skb-${uid}`;
   const ref = useRef<HTMLDivElement>(null);
   const [dims, setDims] = useState({ w: 0, h: 0 });
 
@@ -25,7 +27,7 @@ export function SketchBox({ children, className = "" }: { children: ReactNode; c
           style={{ zIndex: 0 }}
         >
           <defs>
-            <filter id="sk-box" x="-8%" y="-8%" width="116%" height="116%">
+            <filter id={filterId} x="-8%" y="-8%" width="116%" height="116%">
               <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="4" seed="5" result="n"/>
               <feDisplacementMap in="SourceGraphic" in2="n" scale="4" xChannelSelector="R" yChannelSelector="G"/>
             </filter>
@@ -37,7 +39,7 @@ export function SketchBox({ children, className = "" }: { children: ReactNode; c
             stroke="#C62828"
             strokeWidth="2.8"
             rx="16"
-            filter="url(#sk-box)"
+            filter={`url(#${filterId})`}
           />
         </svg>
       )}
@@ -59,6 +61,8 @@ export function SketchChoiceBox({
   onClick: () => void;
   className?: string;
 }) {
+  const uid = useId().replace(/:/g, "");
+  const filterId = `skc-${uid}`;
   const ref = useRef<HTMLButtonElement>(null);
   const [dims, setDims] = useState({ w: 0, h: 0 });
 
@@ -90,7 +94,7 @@ export function SketchChoiceBox({
           style={{ zIndex: 0 }}
         >
           <defs>
-            <filter id="sk-choice" x="-8%" y="-8%" width="116%" height="116%">
+            <filter id={filterId} x="-8%" y="-8%" width="116%" height="116%">
               <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" seed="9" result="n"/>
               <feDisplacementMap in="SourceGraphic" in2="n" scale="3" xChannelSelector="R" yChannelSelector="G"/>
             </filter>
@@ -102,7 +106,7 @@ export function SketchChoiceBox({
             stroke={selected ? "#C62828" : "rgba(198,40,40,0.35)"}
             strokeWidth={selected ? "2.5" : "1.6"}
             rx="12"
-            filter="url(#sk-choice)"
+            filter={`url(#${filterId})`}
           />
         </svg>
       )}
