@@ -34,7 +34,7 @@ export function SketchBox({ children, className = "" }: { children: ReactNode; c
             x="8" y="8"
             width={dims.w - 16} height={dims.h - 16}
             fill="none"
-            stroke="#2C5F2E"
+            stroke="#C62828"
             strokeWidth="2.8"
             rx="16"
             filter="url(#sk-box)"
@@ -48,7 +48,6 @@ export function SketchBox({ children, className = "" }: { children: ReactNode; c
   );
 }
 
-/* Sketch-style button box (for choices) */
 export function SketchChoiceBox({
   children,
   selected,
@@ -79,7 +78,7 @@ export function SketchChoiceBox({
       onClick={onClick}
       className={`choice-box relative w-full text-left px-5 py-3.5 ${className}`}
       style={{
-        background: selected ? "rgba(44,95,46,0.08)" : "transparent",
+        background: selected ? "rgba(198,40,40,0.07)" : "transparent",
         transition: "all .2s ease",
       }}
     >
@@ -100,8 +99,8 @@ export function SketchChoiceBox({
             x="5" y="5"
             width={dims.w - 10} height={dims.h - 10}
             fill="none"
-            stroke={selected ? "#2C5F2E" : "rgba(44,95,46,0.4)"}
-            strokeWidth={selected ? "2.5" : "1.8"}
+            stroke={selected ? "#C62828" : "rgba(198,40,40,0.35)"}
+            strokeWidth={selected ? "2.5" : "1.6"}
             rx="12"
             filter="url(#sk-choice)"
           />

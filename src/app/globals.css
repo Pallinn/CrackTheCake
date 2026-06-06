@@ -13,11 +13,13 @@
   --background: #FFF8EE;
   --foreground: #2C1810;
 
-  /* Story quiz tokens */
-  --paper: #f0ede4;
-  --ink: #2C5F2E;
-  --ink-light: #4a8a4d;
-  --ink-faint: rgba(44,95,46,0.15);
+  /* Story quiz tokens — red/yellow/black palette */
+  --paper: #f5f0e8;
+  --ink: #C62828;
+  --ink-dark: #8B0000;
+  --ink-light: #D32F2F;
+  --ink-faint: rgba(198,40,40,0.12);
+  --ink-accent: #FBC02D;
 }
 
 * { box-sizing: border-box; }
@@ -152,9 +154,9 @@ body.paper-mode {
   min-height: 100vh;
   background-color: var(--paper);
   background-image:
-    radial-gradient(ellipse 80% 60% at 15% 25%, rgba(0,0,0,.025) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 80% at 85% 75%, rgba(44,95,46,.12) 0%, transparent 60%),
-    radial-gradient(ellipse 40% 40% at 50% 50%, rgba(0,0,0,.01) 0%, transparent 70%);
+    radial-gradient(ellipse 80% 60% at 15% 25%, rgba(0,0,0,.02) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 80% at 85% 75%, rgba(198,40,40,.07) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 40% at 50% 50%, rgba(251,192,45,.04) 0%, transparent 70%);
   font-family: 'Sarabun', sans-serif;
 }
 
@@ -168,10 +170,10 @@ body.paper-mode {
   border: none;
   cursor: pointer;
   transition: all .2s ease;
-  box-shadow: 0 3px 0 #1a3d1c;
+  box-shadow: 0 3px 0 #8B0000;
 }
-.ink-btn:hover  { transform: translateY(-2px); box-shadow: 0 5px 0 #1a3d1c; }
-.ink-btn:active { transform: translateY(1px);  box-shadow: 0 1px 0 #1a3d1c; }
+.ink-btn:hover  { transform: translateY(-2px); box-shadow: 0 5px 0 #8B0000; background: #D32F2F; }
+.ink-btn:active { transform: translateY(1px);  box-shadow: 0 1px 0 #8B0000; }
 
 .story-text {
   font-family: 'Sarabun', sans-serif;
@@ -193,7 +195,7 @@ body.paper-mode {
   padding: .4rem .2rem;
   transition: border-color .2s;
 }
-.sketch-input::placeholder { color: #aaa; }
+.sketch-input::placeholder { color: #bbb; }
 .sketch-input:focus { border-bottom-color: var(--ink-light); }
 
 /* Choice hover state */
@@ -202,4 +204,4 @@ body.paper-mode {
   cursor: pointer;
   font-family: 'Sarabun', sans-serif;
 }
-.choice-box:hover { transform: translateX(4px); }
+.choice-box:hover { transform: translateX(5px); }
