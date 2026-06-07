@@ -2,46 +2,50 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { BEATS, calcResult, type Beat, type CakeType } from "./data";
+import { BEATS, calcResult, type Beat, type CakeType, type ScoreMap } from "./data";
 import { SketchBox, SketchChoiceBox } from "@/components/SketchBox";
 import { ILLUSTRATIONS } from "@/components/StoryIllustrations";
 
-// ── Typewriter hook ─────────────────────────────────────────────────────────
+// ── Typewriter — one line every ~1 second, blank lines add a pause ───────────
 function useTypewriter(lines: string[], active: boolean) {
-  const [visibleLines, setVisibleLines] = useState<number>(0);
-  const [done, setDone] = useState(false);
+  const [visible, setVisible] = useState(0);
+  const [done, setDone]       = useState(false);
 
   useEffect(() => {
     if (!active) return;
-    setVisibleLines(0);
+    setVisible(0);
     setDone(false);
     let idx = 0;
     const tick = () => {
       idx++;
-      setVisibleLines(idx);
-      if (idx < lines.length) setTimeout(tick, lines[idx - 1] === "" ? 300 : 700);
+      setVisible(idx);
+      if (idx < lines.length) setTimeout(tick, lines[idx - 1] === "" ? 500 : 1000);
       else setDone(true);
     };
-    const t = setTimeout(tick, 400);
+    const t = setTimeout(tick, 600);
     return () => clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active, lines.join("|")]);
 
-  return { visibleLines, done };
+  return { visible, done };
 }
 
-// ── Warning screen ──────────────────────────────────────────────────────────
+// ── Warning ──────────────────────────────────────────────────────────────────
 function WarningScreen({ onNext }: { onNext: () => void }) {
   return (
     <div className="flex items-center justify-center min-h-screen p-6 paper-bg">
       <div className="w-full max-w-md animate-fade-blur-in">
         <SketchBox className="p-10">
-          <h2 className="text-center font-bold text-xl mb-5" style={{ color: "#C62828", fontFamily: "'Sarabun', sans-serif" }}>
+          <h2 className="text-center font-bold text-xl mb-5"
+            style={{ color: "#C62828", fontFamily: "'Sarabun', sans-serif" }}>
             คำเตือน
           </h2>
           <div className="story-text text-center space-y-3 text-sm leading-loose" style={{ color: "#333" }}>
-            <p>เว็บนี้มีเนื้อหาเกี่ยวกับการเติบโต และสภาพจิตใจ<br />โปรดประเมินความมั่นคงของจิตใจก่อนกดเล่น</p>
+            <p>เว็บนี้มีเนื้อหาเกี่ยวกับการเติบโต และสภาพจิตใจ<br/>
+               โปรดประเมินความมั่นคงของจิตใจก่อนกดเล่น</p>
             <p>หากรู้สึกว่าไม่ไหวสามารถกดออกได้ตลอดเวลา</p>
-            <p>ทางเรามีความยินดีอย่างยิ่งที่คุณจะให้ความสำคัญ<br />กับสภาพจิตใจตัวเองมาเป็นอันดับแรก</p>
+            <p>ทางเรามีความยินดีอย่างยิ่งที่คุณจะให้ความสำคัญ<br/>
+               กับสภาพจิตใจตัวเองมาเป็นอันดับแรก</p>
             <p className="opacity-70">* เว็บนี้ไม่ใช่แบบทดสอบทางจิตวิทยา</p>
           </div>
           <div className="flex justify-end mt-8">
@@ -53,36 +57,27 @@ function WarningScreen({ onNext }: { onNext: () => void }) {
   );
 }
 
-// ── Name screen ─────────────────────────────────────────────────────────────
+// ── Name entry ───────────────────────────────────────────────────────────────
 function NameScreen({ onNext }: { onNext: (name: string) => void }) {
   const [name, setName] = useState("");
-  const [age, setAge] = useState("");
+  const [age,  setAge]  = useState("");
 
   return (
     <div className="flex items-center justify-center min-h-screen p-6 paper-bg">
       <div className="w-full max-w-sm animate-slide-up">
-        <p className="text-center story-text text-lg font-medium mb-10" style={{ color: "#2a2a2a" }}>
-          คุณเคยรู้สึกเหมือนเป็น<br />ตัวประกอบของโลกใบนี้มั้ย
+        <p className="text-center story-text text-xl font-semibold mb-10" style={{ color: "#2a2a2a" }}>
+          เราอยากรู้จักคุณสักหน่อย
         </p>
         <div className="space-y-8 mb-10">
           <div>
             <label className="story-text text-base font-semibold block mb-2" style={{ color: "#C62828" }}>ชื่อ</label>
-            <input
-              value={name}
-              onChange={e => setName(e.target.value)}
-              className="sketch-input"
-              placeholder="ชื่อของคุณ"
-            />
+            <input value={name} onChange={e => setName(e.target.value)}
+              className="sketch-input" placeholder="ชื่อของคุณ"/>
           </div>
           <div>
             <label className="story-text text-base font-semibold block mb-2" style={{ color: "#C62828" }}>อายุ</label>
-            <input
-              value={age}
-              onChange={e => setAge(e.target.value)}
-              className="sketch-input"
-              placeholder="อายุของคุณ"
-              type="number"
-            />
+            <input value={age} onChange={e => setAge(e.target.value)}
+              className="sketch-input" placeholder="อายุของคุณ" type="number"/>
           </div>
         </div>
         <p className="text-center text-xs mb-6 opacity-50 story-text">*เว็บนี้ไม่มีการเก็บข้อมูลของคุณ</p>
@@ -90,8 +85,7 @@ function NameScreen({ onNext }: { onNext: (name: string) => void }) {
           <button
             onClick={() => name.trim() && onNext(name.trim())}
             className="ink-btn text-base px-8 py-3"
-            style={{ opacity: name.trim() ? 1 : 0.5 }}
-          >
+            style={{ opacity: name.trim() ? 1 : 0.45 }}>
             เริ่มเล่น
           </button>
         </div>
@@ -100,43 +94,33 @@ function NameScreen({ onNext }: { onNext: (name: string) => void }) {
   );
 }
 
-// ── Scene screen ─────────────────────────────────────────────────────────────
+// ── Story scene ──────────────────────────────────────────────────────────────
 function SceneScreen({
-  lines, sceneIdx, onNext,
-}: {
-  lines: string[]; sceneIdx: number; onNext: () => void;
-}) {
-  const { visibleLines, done } = useTypewriter(lines, true);
-  const Illus = ILLUSTRATIONS[sceneIdx] ?? ILLUSTRATIONS[0];
+  lines, illustIdx, onNext,
+}: { lines: string[]; illustIdx: number; onNext: () => void }) {
+  const { visible, done } = useTypewriter(lines, true);
+  const Illus = ILLUSTRATIONS[illustIdx] ?? ILLUSTRATIONS[0];
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-6 paper-bg">
       <div className="w-full max-w-sm flex flex-col items-center gap-6">
-        {/* Illustration */}
-        <div className="animate-fade-blur-in w-full">
-          <Illus />
-        </div>
+        <div className="animate-fade-blur-in w-full"><Illus/></div>
 
-        {/* Narration text */}
-        <div className="w-full min-h-[120px]">
-          {lines.slice(0, visibleLines).map((line, i) => (
-            <p
-              key={i}
-              className="story-text animate-draw-in mb-1"
+        <div className="w-full min-h-[130px]">
+          {lines.slice(0, visible).map((line, i) => (
+            <p key={i} className="story-text animate-draw-in mb-1"
               style={{
-                color: line.startsWith('"') ? "#C62828" : "#2a2a2a",
-                fontStyle: line.startsWith('"') ? "italic" : "normal",
-                fontWeight: line.startsWith('"') ? 600 : 400,
-                fontSize: line === "" ? "0.4rem" : "1rem",
+                color:       line.startsWith('"') ? "#C62828" : "#2a2a2a",
+                fontStyle:   line.startsWith('"') ? "italic"  : "normal",
+                fontWeight:  line.startsWith('"') ? 600 : 400,
+                fontSize:    line === "" ? "0.35rem" : "1rem",
                 animationFillMode: "both",
-              }}
-            >
-              {line || " "}
+              }}>
+              {line || " "}
             </p>
           ))}
         </div>
 
-        {/* Continue button */}
         {done && (
           <button onClick={onNext} className="ink-btn animate-fade-blur-in mt-2 px-8">
             ไปต่อ
@@ -147,56 +131,50 @@ function SceneScreen({
   );
 }
 
-// ── Question screen ──────────────────────────────────────────────────────────
+// ── Question screen ───────────────────────────────────────────────────────────
 function QuestionScreen({
-  beat, questionNumber, totalQuestions, onAnswer,
+  beat, qNum, totalQ, illustIdx, onAnswer,
 }: {
-  beat: Extract<Beat, { type: "question" }>;
-  questionNumber: number;
-  totalQuestions: number;
+  beat: Extract<Beat, { kind: "question" }>;
+  qNum: number; totalQ: number; illustIdx: number;
   onAnswer: (cake: CakeType) => void;
 }) {
   const [selected, setSelected] = useState<CakeType | null>(null);
-
-  const confirm = () => { if (selected) onAnswer(selected); };
+  const Illus = ILLUSTRATIONS[illustIdx] ?? ILLUSTRATIONS[0];
 
   return (
-    <div className="flex flex-col items-center min-h-screen p-6 paper-bg pt-12">
+    <div className="flex flex-col items-center min-h-screen p-6 paper-bg pt-8">
       <div className="w-full max-w-sm animate-slide-up">
-        {/* Progress */}
-        <div className="flex items-center gap-2 mb-6">
-          <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: "rgba(198,40,40,0.12)" }}>
-            <div
-              className="h-full rounded-full transition-all duration-500"
-              style={{ width: `${(questionNumber / totalQuestions) * 100}%`, background: "#C62828" }}
-            />
+
+        {/* Illustration */}
+        <div className="animate-fade-blur-in w-full mb-5"><Illus/></div>
+
+        {/* Progress dots */}
+        <div className="flex items-center gap-2 mb-5">
+          <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(198,40,40,0.12)" }}>
+            <div className="h-full rounded-full transition-all duration-700"
+              style={{ width: `${(qNum / totalQ) * 100}%`, background: "linear-gradient(90deg,#C62828,#FBC02D)" }}/>
           </div>
-          <span className="text-xs font-semibold" style={{ color: "#C62828", fontFamily: "'Sarabun',sans-serif" }}>
-            {questionNumber}/{totalQuestions}
+          <span className="text-xs font-bold" style={{ color: "#C62828", fontFamily: "'Sarabun',sans-serif" }}>
+            {qNum}/{totalQ}
           </span>
         </div>
 
-        {/* Question */}
-        <p className="story-text text-lg font-semibold mb-6 leading-relaxed" style={{ color: "#1a1a1a" }}>
+        {/* Question text */}
+        <p className="story-text text-base font-semibold mb-5 leading-relaxed whitespace-pre-line"
+          style={{ color: "#1a1a1a" }}>
           {beat.text}
         </p>
 
-        {/* Choices */}
+        {/* 5-choice list */}
         <div className="space-y-3 mb-8">
           {beat.choices.map((c, i) => (
-            <div
-              key={c.cake + i}
-              className="animate-choice-in"
-              style={{ animationDelay: `${i * 80}ms`, animationFillMode: "both", opacity: 0 }}
-            >
-              <SketchChoiceBox
-                selected={selected === c.cake}
-                onClick={() => setSelected(c.cake)}
-              >
-                <span
-                  className="story-text text-sm leading-relaxed"
-                  style={{ color: selected === c.cake ? "#C62828" : "#2a2a2a", fontWeight: selected === c.cake ? 600 : 400 }}
-                >
+            <div key={i} className="animate-choice-in"
+              style={{ animationDelay: `${i * 100}ms`, animationFillMode: "both", opacity: 0 }}>
+              <SketchChoiceBox selected={selected === c.cake} onClick={() => setSelected(c.cake)}>
+                <span className="story-text text-sm leading-relaxed"
+                  style={{ color: selected === c.cake ? "#C62828" : "#2a2a2a",
+                           fontWeight: selected === c.cake ? 700 : 400 }}>
                   {c.text}
                 </span>
               </SketchChoiceBox>
@@ -204,13 +182,11 @@ function QuestionScreen({
           ))}
         </div>
 
-        {/* Next */}
+        {/* Confirm */}
         <div className="flex justify-center">
-          <button
-            onClick={confirm}
-            className="ink-btn px-10 py-2.5 text-base"
-            style={{ opacity: selected ? 1 : 0.35, pointerEvents: selected ? "auto" : "none" }}
-          >
+          <button onClick={() => selected && onAnswer(selected)}
+            className="ink-btn px-10 py-2.5 text-base transition-opacity duration-300"
+            style={{ opacity: selected ? 1 : 0.35, pointerEvents: selected ? "auto" : "none" }}>
             ถัดไป
           </button>
         </div>
@@ -219,67 +195,37 @@ function QuestionScreen({
   );
 }
 
-// ── Ending screen ────────────────────────────────────────────────────────────
+// ── Ending screen ─────────────────────────────────────────────────────────────
 function EndingScreen({ name, onReveal }: { name: string; onReveal: () => void }) {
+  const IllusGift = ILLUSTRATIONS[4];
   const lines = [
-    `${name} …`,
-    "",
-    "อย่าลืมที่จะให้รางวัลตัวเองบ้างนะ",
-    "",
-    `คุณน่ะ เก่งมาก ๆ แล้ว`,
-    "ที่ใช้ชีวิตอย่างแข็งแกร่งอยู่ในทุกวันนี้",
-    "",
+    `${name} …`, "",
+    "อย่าลืมที่จะให้รางวัลตัวเองบ้างนะ", "",
+    "คุณน่ะ เก่งมาก ๆ แล้ว",
+    "ที่ใช้ชีวิตอย่างแข็งแกร่งอยู่ในทุกวันนี้", "",
     "ขอมอบเค้กชิ้นนี้",
     "ให้เป็นรางวัลคนเก่งที่พยายามอยู่ในทุกวันนี้นะ",
   ];
-  const { visibleLines, done } = useTypewriter(lines, true);
+  const { visible, done } = useTypewriter(lines, true);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-6 paper-bg">
       <div className="w-full max-w-sm flex flex-col items-center gap-6">
-        {/* Simple cake SVG */}
-        <div className="animate-float">
-          <svg viewBox="0 0 160 160" width="160" height="160" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <filter id="sk-end" x="-10%" y="-10%" width="120%" height="120%">
-                <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" seed="3"/>
-                <feDisplacementMap in="SourceGraphic" scale="2.5"/>
-              </filter>
-            </defs>
-            <g filter="url(#sk-end)" stroke="#C62828" strokeLinecap="round">
-              <rect x="20" y="100" width="120" height="48" rx="10" strokeWidth="2" fill="rgba(198,40,40,.06)"/>
-              <path d="M20 100 Q30 86 40 100 Q50 86 60 100 Q70 86 80 100 Q90 86 100 100 Q110 86 120 100 Q130 86 140 100" strokeWidth="2" fill="none"/>
-              <rect x="38" y="62" width="84" height="42" rx="8" strokeWidth="2" fill="rgba(198,40,40,.07)"/>
-              <path d="M38 62 Q46 50 54 62 Q62 50 70 62 Q78 50 86 62 Q94 50 102 62 Q110 50 118 62 Q122 50 122 62" strokeWidth="1.8" fill="none"/>
-              <rect x="55" y="30" width="50" height="36" rx="6" strokeWidth="2" fill="rgba(198,40,40,.08)"/>
-              <path d="M55 30 Q61 20 67 30 Q73 20 79 30 Q85 20 91 30 Q97 20 105 30" strokeWidth="1.6" fill="none"/>
-              <ellipse cx="80" cy="26" rx="22" ry="10" strokeWidth="1.8" fill="rgba(198,40,40,.05)"/>
-              <line x1="80" y1="16" x2="80" y2="2" strokeWidth="2"/>
-              <path d="M80 0 Q85 -4 83 2 Q80 6 77 2 Q75 -4 80 0Z" strokeWidth="1" fill="rgba(251,192,45,.3)"/>
-              {[40,60,80,100,120].map((x,i)=><circle key={i} cx={x} cy={118} r="3" strokeWidth="1.5" fill="rgba(251,192,45,.2)"/>)}
-            </g>
-          </svg>
-        </div>
-
-        {/* Narration */}
-        <div className="w-full min-h-[140px] text-center">
-          {lines.slice(0, visibleLines).map((line, i) => (
-            <p
-              key={i}
-              className="story-text animate-draw-in"
+        <div className="animate-fade-blur-in w-full"><IllusGift/></div>
+        <div className="w-full min-h-[150px] text-center">
+          {lines.slice(0, visible).map((line, i) => (
+            <p key={i} className="story-text animate-draw-in"
               style={{
-                fontSize: i === 0 ? "1.25rem" : "1rem",
-                fontWeight: i === 0 ? 700 : 400,
-                color: i === 0 ? "#C62828" : "#2a2a2a",
+                fontSize:    i === 0 ? "1.25rem" : "1rem",
+                fontWeight:  i === 0 ? 700 : 400,
+                color:       i === 0 ? "#C62828" : "#2a2a2a",
                 marginBottom: line === "" ? "0.5rem" : "0.15rem",
                 animationFillMode: "both",
-              }}
-            >
-              {line || " "}
+              }}>
+              {line || " "}
             </p>
           ))}
         </div>
-
         {done && (
           <button onClick={onReveal} className="ink-btn animate-fade-blur-in px-10 py-3 text-base mt-2">
             คลิกเพื่อดูผลลัพธ์ของคุณ
@@ -290,48 +236,80 @@ function EndingScreen({ name, onReveal }: { name: string; onReveal: () => void }
   );
 }
 
-// ── Main orchestrator ────────────────────────────────────────────────────────
+// ── Root page ─────────────────────────────────────────────────────────────────
+type Phase = "warning" | "name" | "beats" | "ending";
+
 export default function QuizPage() {
   const router = useRouter();
+  const [phase, setPhase]   = useState<Phase>("warning");
+  const [name,  setName]    = useState("เพื่อน");
   const [beatIdx, setBeatIdx] = useState(0);
-  const [name, setName] = useState("เพื่อน");
-  const [answers, setAnswers] = useState<Record<number, CakeType>>({});
+  const [scores, setScores] = useState<ScoreMap>({
+    vanilla: 0, matcha: 0, chocolate: 0, strawberry: 0, cookie: 0,
+  });
 
-  const totalQ = BEATS.filter(b => b.type === "question").length;
-  const answeredSoFar = Object.keys(answers).length;
+  const questions = BEATS.filter(b => b.kind === "question");
+  const totalQ    = questions.length;
+  const answeredSoFar = Object.values(scores).reduce((a, b) => a + b, 0);
 
   const beat = BEATS[beatIdx];
 
-  const next = useCallback(() => setBeatIdx(i => i + 1), []);
+  const nextBeat = useCallback(() => setBeatIdx(i => Math.min(i + 1, BEATS.length - 1)), []);
 
-  const handleAnswer = useCallback((qid: number, cake: CakeType) => {
-    setAnswers(prev => ({ ...prev, [qid]: cake }));
-    setBeatIdx(i => i + 1);
-  }, []);
+  const handleAnswer = useCallback((cake: CakeType) => {
+    setScores(prev => ({ ...prev, [cake]: prev[cake] + 1 }));
+    nextBeat();
+  }, [nextBeat]);
 
   const handleReveal = useCallback(() => {
-    const result = calcResult(answers);
-    router.push(`/result?type=${result}&name=${encodeURIComponent(name)}`);
-  }, [answers, name, router]);
+    const type = calcResult(scores);
+    router.push(`/result?type=${type}&name=${encodeURIComponent(name)}`);
+  }, [scores, name, router]);
 
-  if (!beat) return null;
+  // After last beat → go to ending
+  const isLastBeat = beatIdx >= BEATS.length - 1;
 
-  if (beat.type === "warning") return <WarningScreen onNext={next} />;
-  if (beat.type === "name") return <NameScreen onNext={(n) => { setName(n); next(); }} />;
-  if (beat.type === "scene") return (
-    <SceneScreen lines={beat.lines} sceneIdx={beat.scene} onNext={next} />
-  );
-  if (beat.type === "question") return (
-    <QuestionScreen
-      beat={beat}
-      questionNumber={answeredSoFar + 1}
-      totalQuestions={totalQ}
-      onAnswer={(cake) => handleAnswer(beat.id, cake)}
-    />
-  );
-  if (beat.type === "ending") return (
-    <EndingScreen name={name} onReveal={handleReveal} />
-  );
+  if (phase === "warning") return <WarningScreen onNext={() => setPhase("name")}/>;
+  if (phase === "name")    return <NameScreen onNext={n => { setName(n); setPhase("beats"); }}/>;
+
+  if (phase === "beats") {
+    if (!beat || isLastBeat) {
+      // Reached ending story — still show it, then trigger ending
+    }
+
+    if (!beat) {
+      setPhase("ending");
+      return null;
+    }
+
+    if (beat.kind === "story") {
+      const isEnding = beatIdx === BEATS.length - 1;
+      return (
+        <SceneScreen
+          lines={beat.text}
+          illustIdx={beat.illus}
+          onNext={() => {
+            if (isEnding) setPhase("ending");
+            else nextBeat();
+          }}
+        />
+      );
+    }
+
+    if (beat.kind === "question") {
+      return (
+        <QuestionScreen
+          beat={beat}
+          qNum={answeredSoFar + 1}
+          totalQ={totalQ}
+          illustIdx={beat.illus}
+          onAnswer={handleAnswer}
+        />
+      );
+    }
+  }
+
+  if (phase === "ending") return <EndingScreen name={name} onReveal={handleReveal}/>;
 
   return null;
 }
