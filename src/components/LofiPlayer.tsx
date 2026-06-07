@@ -147,6 +147,40 @@ function createRain(ctx: AudioContext, dest: AudioNode): RainState {
   return { sources, gainNode: master };
 }
 
+// ─── Car horn SFX ────────────────────────────────────────────────────────────
+function playHorn(ctx: AudioContext, dest: AudioNode) {
+  const now = ctx.currentTime;
+  for (const [freq, vol] of [[440, 0.4], [550, 0.25], [660, 0.15]] as [number,number][]) {
+    const osc = ctx.createOscillator();
+    osc.type = "sawtooth";
+    osc.frequency.value = freq;
+    const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 1800;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0, now);
+    g.gain.linearRampToValueAtTime(vol, now + 0.02);
+    g.gain.setValueAtTime(vol, now + 0.22);
+    g.gain.linearRampToValueAtTime(0, now + 0.3);
+    osc.connect(lp); lp.connect(g); g.connect(dest);
+    osc.start(now); osc.stop(now + 0.35);
+  }
+}
+
+// ─── Snore SFX ────────────────────────────────────────────────────────────────
+function playSnore(ctx: AudioContext, dest: AudioNode) {
+  const now = ctx.currentTime;
+  for (const [start, dur] of [[0, 0.7], [1.0, 0.8]] as [number, number][]) {
+    const src = ctx.createBufferSource();
+    src.buffer = noiseBuf(ctx, dur + 0.1);
+    const lp = ctx.createBiquadFilter(); lp.type = "bandpass"; lp.frequency.value = 280; lp.Q.value = 2;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0, now + start);
+    g.gain.linearRampToValueAtTime(0.18, now + start + dur * 0.35);
+    g.gain.linearRampToValueAtTime(0, now + start + dur);
+    src.connect(lp); lp.connect(g); g.connect(dest);
+    src.start(now + start);
+  }
+}
+
 // ─── Portal / dimension door SFX ─────────────────────────────────────────────
 function playPortal(ctx: AudioContext, dest: AudioNode) {
   const now = ctx.currentTime;
@@ -373,10 +407,12 @@ export default function LofiPlayer() {
 
     const onSfx = (e: Event) => {
       const sfx = (e as CustomEvent<string>).detail;
-      if (sfx === "portal") {
+      if (sfx === "portal" || sfx === "horn" || sfx === "snore") {
         const rig = getRig();
         if (rig.ctx.state === "suspended") rig.ctx.resume();
-        playPortal(rig.ctx, rig.ambIn);
+        if (sfx === "portal") playPortal(rig.ctx, rig.ambIn);
+        if (sfx === "horn") playHorn(rig.ctx, rig.ambIn);
+        if (sfx === "snore") playSnore(rig.ctx, rig.ambIn);
       }
     };
 

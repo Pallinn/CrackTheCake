@@ -247,6 +247,7 @@ export default function QuizPage() {
   const [scores, setScores] = useState<ScoreMap>({
     vanilla: 0, matcha: 0, chocolate: 0, strawberry: 0, cookie: 0,
   });
+  const [lastAnswer, setLastAnswer] = useState("");
 
   const questions = BEATS.filter(b => b.kind === "question");
   const totalQ    = questions.length;
@@ -258,12 +259,33 @@ export default function QuizPage() {
 
   const handleAnswer = useCallback((cake: CakeType) => {
     setScores(prev => ({ ...prev, [cake]: prev[cake] + 1 }));
-    // Portal SFX when user picks a door (beat 8 = Q3 "choose a door")
-    if (beatIdx === 8) {
-      window.dispatchEvent(new CustomEvent("game-sfx", { detail: "portal" }));
+    if (beatIdx === 6) window.dispatchEvent(new CustomEvent("game-sfx", { detail: "portal" }));
+    if (beatIdx === 12) {
+      setLastAnswer(cake === "chocolate" ? "ยังพยายามต่อ แม้จะเหนื่อย"
+        : cake === "vanilla" ? "ดูแลคนรักได้ดี"
+        : cake === "cookie" ? "ผ่านเรื่องยาก ๆ มาได้"
+        : cake === "strawberry" ? "ยังไม่ยอมแพ้ต่อความฝัน"
+        : "ยังเป็นตัวเองอยู่");
     }
     nextBeat();
   }, [nextBeat, beatIdx]);
+
+  // Car horn when entering city scene
+  useEffect(() => {
+    if (phase === "beats" && beatIdx === 0) {
+      const t1 = setTimeout(() => window.dispatchEvent(new CustomEvent("game-sfx",{detail:"horn"})), 600);
+      const t2 = setTimeout(() => window.dispatchEvent(new CustomEvent("game-sfx",{detail:"horn"})), 1800);
+      return () => { clearTimeout(t1); clearTimeout(t2); };
+    }
+  }, [phase, beatIdx]);
+
+  // Snore when on sleeping scene
+  useEffect(() => {
+    if (phase === "beats" && beatIdx === 2) {
+      const t = setTimeout(() => window.dispatchEvent(new CustomEvent("game-sfx",{detail:"snore"})), 1200);
+      return () => clearTimeout(t);
+    }
+  }, [phase, beatIdx]);
 
   // Rain ambience on city/rain scene (beat 0, illus 0)
   useEffect(() => {
@@ -299,9 +321,10 @@ export default function QuizPage() {
 
     if (beat.kind === "story") {
       const isEnding = beatIdx === BEATS.length - 1;
+      const resolvedLines = beat.text.map(l => lastAnswer ? l.replace("{ANSWER}", lastAnswer) : l);
       return (
         <SceneScreen
-          lines={beat.text}
+          lines={resolvedLines}
           illustIdx={beat.illus}
           onNext={() => {
             if (isEnding) setPhase("ending");
