@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import LofiPlayer from "@/components/LofiPlayer";
 
 export const metadata: Metadata = {
   title: "Crack the Cake — Discover Your Personality",
@@ -13,7 +14,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full">
-      <body className="min-h-full">{children}</body>
+      <body className="min-h-full">
+        {children}
+        <LofiPlayer/>
+      </body>
     </html>
   );
 }
