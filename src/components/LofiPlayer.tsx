@@ -2,291 +2,392 @@
 
 import { useRef, useState, useCallback, useEffect } from "react";
 
-// ── Music constants ───────────────────────────────────────────────────────────
-const BPM   = 80;
-const BEAT  = 60 / BPM;        // 0.75s per beat
-const BAR   = BEAT * 4;        // 3.0s per bar
-const LOOK  = 0.15;            // lookahead seconds
-const SCHED = 80;              // scheduler interval ms
+// ─── Music constants ──────────────────────────────────────────────────────────
+const BPM   = 65;
+const BEAT  = 60 / BPM;   // ~0.923 s
+const BAR   = BEAT * 4;   // ~3.69 s
+const LOOK  = 0.18;
+const SCHED = 80;
 
-const N = {
-  C3:130.81, D3:146.83, Eb3:155.56, E3:164.81, F3:174.61,
-  G3:196.00, Ab3:207.65, A3:220.00, Bb3:233.08, B3:246.94,
-  C4:261.63, D4:293.66, Eb4:311.13, E4:329.63, F4:349.23,
-  G4:392.00, Ab4:415.30, A4:440.00, Bb4:466.16, B4:493.88,
-  C5:523.25, D5:587.33, Eb5:622.25,
-};
-
-// Chord voicings  (root, 3rd, 5th, 7th) — jazz-flavoured
+// Cinematic 4-chord loop: Am → F → C → G
 const CHORDS = [
-  [N.C3,  N.E3,  N.G3,  N.B3 ],  // Cmaj7
-  [N.A3,  N.C4,  N.E4,  N.Ab4],  // Am7
-  [N.F3,  N.A3,  N.C4,  N.E4 ],  // Fmaj7
-  [N.G3,  N.B3,  N.D4,  N.F4 ],  // G7
+  [220.00, 261.63, 329.63, 392.00],  // Am7
+  [174.61, 220.00, 261.63, 329.63],  // Fmaj7
+  [130.81, 164.81, 196.00, 246.94],  // Cmaj7
+  [196.00, 246.94, 293.66, 369.99],  // Gmaj7
 ];
 
-// Sparse melody (null = rest) — one note per beat
-const MELODY = [
-  [N.E4,  N.G4,  null,  N.A4 ],
-  [null,  N.G4,  N.E4,  null ],
-  [N.F4,  null,  N.A4,  N.C5 ],
-  [null,  N.B4,  null,  N.G4 ],
+// Sparse emotional melody (null = rest)
+const MELODY: (number | null)[][] = [
+  [null,   523.25, null,   440.00],
+  [392.00, null,   440.00, null  ],
+  [392.00, 329.63, null,   261.63],
+  [null,   440.00, 392.00, null  ],
 ];
 
-// ── Audio helpers ─────────────────────────────────────────────────────────────
-function makeNoiseBuf(ctx: AudioContext, secs: number) {
-  const n    = Math.ceil(ctx.sampleRate * secs);
-  const buf  = ctx.createBuffer(1, n, ctx.sampleRate);
-  const data = buf.getChannelData(0);
-  for (let i = 0; i < n; i++) data[i] = Math.random() * 2 - 1;
-  return buf;
+// ─── Synth helpers ────────────────────────────────────────────────────────────
+
+function noiseBuf(ctx: AudioContext, secs: number) {
+  const n = Math.ceil(ctx.sampleRate * secs);
+  const b = ctx.createBuffer(1, n, ctx.sampleRate);
+  const d = b.getChannelData(0);
+  for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+  return b;
 }
 
-function kick(ctx: AudioContext, dest: AudioNode, t: number) {
+/** Dramatic string pad: 3 detuned saws → warm lowpass → slow envelope */
+function stringNote(ctx: AudioContext, dest: AudioNode, freq: number, t: number, dur: number, vol = 0.07) {
+  const out = ctx.createGain();
+  out.gain.setValueAtTime(0, t);
+  out.gain.linearRampToValueAtTime(vol, t + 0.75);
+  out.gain.setValueAtTime(vol * 0.85, t + dur - 1.0);
+  out.gain.linearRampToValueAtTime(0, t + dur);
+  out.connect(dest);
+  for (const det of [-9, 0, 9]) {
+    const osc = ctx.createOscillator();
+    osc.type = "sawtooth";
+    osc.frequency.value = freq;
+    osc.detune.value = det;
+    const lp = ctx.createBiquadFilter();
+    lp.type = "lowpass"; lp.frequency.value = 1500; lp.Q.value = 0.4;
+    osc.connect(lp); lp.connect(out);
+    osc.start(t); osc.stop(t + dur + 0.1);
+  }
+}
+
+/** Cinematic piano: triangle osc → soft lowpass */
+function pianoNote(ctx: AudioContext, dest: AudioNode, freq: number, t: number, dur: number, vol = 0.09) {
   const osc  = ctx.createOscillator();
-  const gain = ctx.createGain();
-  osc.connect(gain); gain.connect(dest);
-  osc.frequency.setValueAtTime(150, t);
-  osc.frequency.exponentialRampToValueAtTime(42, t + 0.2);
-  gain.gain.setValueAtTime(1.4, t);
-  gain.gain.exponentialRampToValueAtTime(0.001, t + 0.38);
-  osc.start(t); osc.stop(t + 0.4);
-}
-
-function snare(ctx: AudioContext, dest: AudioNode, t: number) {
-  // noise layer
-  const src  = ctx.createBufferSource();
-  src.buffer = makeNoiseBuf(ctx, 0.2);
-  const hp   = ctx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 1200;
-  const g1   = ctx.createGain();
-  src.connect(hp); hp.connect(g1); g1.connect(dest);
-  g1.gain.setValueAtTime(0.45, t);
-  g1.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
-  src.start(t);
-  // tone layer
-  const osc  = ctx.createOscillator();
-  const g2   = ctx.createGain();
-  osc.frequency.value = 185;
-  osc.connect(g2); g2.connect(dest);
-  g2.gain.setValueAtTime(0.55, t);
-  g2.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
-  osc.start(t); osc.stop(t + 0.1);
-}
-
-function hihat(ctx: AudioContext, dest: AudioNode, t: number, open = false) {
-  const dur  = open ? 0.28 : 0.055;
-  const src  = ctx.createBufferSource();
-  src.buffer = makeNoiseBuf(ctx, dur + 0.01);
-  const hp   = ctx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 8000;
-  const gain = ctx.createGain();
-  src.connect(hp); hp.connect(gain); gain.connect(dest);
-  gain.gain.setValueAtTime(0.13, t);
-  gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
-  src.start(t);
-}
-
-function pianoNote(
-  ctx: AudioContext, dest: AudioNode,
-  freq: number, t: number, dur: number, vol = 0.13,
-) {
-  const osc   = ctx.createOscillator();
-  osc.type    = "triangle";
+  osc.type   = "triangle";
   osc.frequency.value = freq;
-  osc.detune.value    = (Math.random() - 0.5) * 10; // subtle warmth
-  const lp    = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 1100;
-  const gain  = ctx.createGain();
-  osc.connect(lp); lp.connect(gain); gain.connect(dest);
+  osc.detune.value    = (Math.random() - 0.5) * 14;
+  const lp   = ctx.createBiquadFilter();
+  lp.type    = "lowpass"; lp.frequency.value = 1300;
+  const gain = ctx.createGain();
   gain.gain.setValueAtTime(0, t);
   gain.gain.linearRampToValueAtTime(vol, t + 0.05);
-  gain.gain.setValueAtTime(vol * 0.65, t + 0.35);
+  gain.gain.setValueAtTime(vol * 0.6, t + 0.4);
   gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  osc.connect(lp); lp.connect(gain); gain.connect(dest);
   osc.start(t); osc.stop(t + dur + 0.05);
 }
 
-function startCrackle(ctx: AudioContext, dest: AudioNode) {
-  // Sparse vinyl pops on a 4s loop
-  const secs  = 4;
-  const n     = Math.ceil(ctx.sampleRate * secs);
-  const buf   = ctx.createBuffer(1, n, ctx.sampleRate);
-  const data  = buf.getChannelData(0);
-  for (let i = 0; i < n; i++) {
-    data[i] = Math.random() < 0.0008 ? (Math.random() - 0.5) * 0.5 : 0;
+/** Double heartbeat kick on bar 1 */
+function heartbeat(ctx: AudioContext, dest: AudioNode, t: number) {
+  for (const off of [0, 0.13]) {
+    const osc  = ctx.createOscillator();
+    osc.frequency.setValueAtTime(68, t + off);
+    osc.frequency.exponentialRampToValueAtTime(38, t + off + 0.18);
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.4, t + off);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + off + 0.25);
+    osc.connect(gain); gain.connect(dest);
+    osc.start(t + off); osc.stop(t + off + 0.28);
   }
-  // Continuous white-noise undercurrent (very quiet hiss)
-  const hiss  = ctx.createBuffer(1, n, ctx.sampleRate);
-  const hd    = hiss.getChannelData(0);
-  for (let i = 0; i < n; i++) hd[i] = (Math.random() * 2 - 1) * 0.012;
-
-  const src1  = ctx.createBufferSource();
-  src1.buffer = buf;  src1.loop = true;
-  const src2  = ctx.createBufferSource();
-  src2.buffer = hiss; src2.loop = true;
-  const lp    = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 4000;
-  const gain  = ctx.createGain(); gain.gain.value = 0.6;
-  src1.connect(gain); src2.connect(lp); lp.connect(gain); gain.connect(dest);
-  src1.start(); src2.start();
-  return [src1, src2] as const;
 }
 
-// ── Main component ────────────────────────────────────────────────────────────
+// ─── Rain ambience ────────────────────────────────────────────────────────────
+type RainState = { sources: AudioBufferSourceNode[]; gainNode: GainNode };
+
+function createRain(ctx: AudioContext, dest: AudioNode): RainState {
+  const master = ctx.createGain();
+  master.gain.setValueAtTime(0, ctx.currentTime);
+  master.gain.linearRampToValueAtTime(0.55, ctx.currentTime + 2.5);
+  master.connect(dest);
+
+  const secs  = 4;
+  const base  = noiseBuf(ctx, secs);
+  const sources: AudioBufferSourceNode[] = [];
+
+  // Layer 1 — high hiss
+  const s1 = ctx.createBufferSource(); s1.buffer = base; s1.loop = true;
+  const bp1 = ctx.createBiquadFilter(); bp1.type = "bandpass"; bp1.frequency.value = 3200; bp1.Q.value = 1.0;
+  const g1  = ctx.createGain(); g1.gain.value = 0.55;
+  s1.connect(bp1); bp1.connect(g1); g1.connect(master); s1.start();
+  sources.push(s1);
+
+  // Layer 2 — mid drops (slightly slower playback for texture variation)
+  const s2 = ctx.createBufferSource(); s2.buffer = noiseBuf(ctx, secs + 1); s2.loop = true; s2.playbackRate.value = 0.72;
+  const bp2 = ctx.createBiquadFilter(); bp2.type = "bandpass"; bp2.frequency.value = 650; bp2.Q.value = 1.4;
+  const g2  = ctx.createGain(); g2.gain.value = 0.32;
+  s2.connect(bp2); bp2.connect(g2); g2.connect(master); s2.start();
+  sources.push(s2);
+
+  // Layer 3 — low patter
+  const s3 = ctx.createBufferSource(); s3.buffer = noiseBuf(ctx, secs + 2); s3.loop = true; s3.playbackRate.value = 0.45;
+  const lp3 = ctx.createBiquadFilter(); lp3.type = "lowpass"; lp3.frequency.value = 300;
+  const g3  = ctx.createGain(); g3.gain.value = 0.14;
+  s3.connect(lp3); lp3.connect(g3); g3.connect(master); s3.start();
+  sources.push(s3);
+
+  return { sources, gainNode: master };
+}
+
+// ─── Portal / dimension door SFX ─────────────────────────────────────────────
+function playPortal(ctx: AudioContext, dest: AudioNode) {
+  const now = ctx.currentTime;
+
+  // 1. Low rumble build-up
+  const rSrc = ctx.createBufferSource();
+  rSrc.buffer = noiseBuf(ctx, 0.7);
+  const rLp  = ctx.createBiquadFilter(); rLp.type = "lowpass"; rLp.frequency.value = 160;
+  const rG   = ctx.createGain();
+  rG.gain.setValueAtTime(0, now);
+  rG.gain.linearRampToValueAtTime(0.55, now + 0.18);
+  rG.gain.linearRampToValueAtTime(0, now + 0.6);
+  rSrc.connect(rLp); rLp.connect(rG); rG.connect(dest);
+  rSrc.start(now);
+
+  // 2. Rising frequency sweep
+  const sweep = ctx.createOscillator();
+  sweep.type  = "sine";
+  sweep.frequency.setValueAtTime(75, now + 0.08);
+  sweep.frequency.exponentialRampToValueAtTime(2400, now + 1.0);
+  const sG = ctx.createGain();
+  sG.gain.setValueAtTime(0, now + 0.08);
+  sG.gain.linearRampToValueAtTime(0.55, now + 0.3);
+  sG.gain.linearRampToValueAtTime(0, now + 1.05);
+  sweep.connect(sG); sG.connect(dest);
+  sweep.start(now + 0.08); sweep.stop(now + 1.1);
+
+  // 3. Crystal bell harmonics at the peak
+  const bells: [number, number, number][] = [
+    [880,  0.32, 0.68],
+    [1320, 0.22, 0.73],
+    [1760, 0.18, 0.78],
+    [2200, 0.13, 0.83],
+    [660,  0.28, 0.71],
+    [2640, 0.09, 0.88],
+  ];
+  for (const [freq, vol, delay] of bells) {
+    const osc  = ctx.createOscillator();
+    osc.type   = "sine";
+    osc.frequency.value = freq;
+    const bG   = ctx.createGain();
+    bG.gain.setValueAtTime(0, now + delay);
+    bG.gain.linearRampToValueAtTime(vol, now + delay + 0.03);
+    bG.gain.exponentialRampToValueAtTime(0.001, now + delay + 1.8);
+    osc.connect(bG); bG.connect(dest);
+    osc.start(now + delay); osc.stop(now + delay + 2.0);
+  }
+
+  // 4. Whoosh noise burst
+  const wSrc = ctx.createBufferSource();
+  wSrc.buffer = noiseBuf(ctx, 0.55);
+  const wHp  = ctx.createBiquadFilter(); wHp.type = "highpass"; wHp.frequency.value = 3500;
+  const wG   = ctx.createGain();
+  wG.gain.setValueAtTime(0, now + 0.55);
+  wG.gain.linearRampToValueAtTime(0.28, now + 0.72);
+  wG.gain.linearRampToValueAtTime(0, now + 1.05);
+  wSrc.connect(wHp); wHp.connect(wG); wG.connect(dest);
+  wSrc.start(now + 0.55);
+
+  // 5. Ethereal high tone — floats after the whoosh
+  const ether = ctx.createOscillator();
+  ether.type  = "sine";
+  ether.frequency.value = 3200;
+  ether.frequency.exponentialRampToValueAtTime(1800, now + 2.5);
+  const eG = ctx.createGain();
+  eG.gain.setValueAtTime(0, now + 0.9);
+  eG.gain.linearRampToValueAtTime(0.12, now + 1.1);
+  eG.gain.exponentialRampToValueAtTime(0.001, now + 2.5);
+  ether.connect(eG); eG.connect(dest);
+  ether.start(now + 0.9); ether.stop(now + 2.6);
+}
+
+// ─── Audio context builder ────────────────────────────────────────────────────
+interface AudioRig {
+  ctx:      AudioContext;
+  musicIn:  GainNode;   // for strings/piano — goes through warm lowpass + reverb
+  ambIn:    GainNode;   // for rain/sfx — direct to destination
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
 export default function LofiPlayer() {
   const [playing, setPlaying] = useState(false);
-  const ctxRef      = useRef<AudioContext | null>(null);
-  const masterRef   = useRef<GainNode | null>(null);
-  const timerRef    = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const nextBarRef  = useRef(0);
-  const barIdxRef   = useRef(0);
-  const crackRef    = useRef<readonly [AudioBufferSourceNode, AudioBufferSourceNode] | null>(null);
+  const rigRef    = useRef<AudioRig | null>(null);
+  const timerRef  = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const nextBar   = useRef(0);
+  const barIdx    = useRef(0);
+  const rainRef   = useRef<RainState | null>(null);
 
-  // Build master chain once
-  const getCtx = useCallback(() => {
-    if (ctxRef.current) return { ctx: ctxRef.current, master: masterRef.current! };
-    const ctx    = new AudioContext();
-    const master = ctx.createGain(); master.gain.value = 0.72;
-    const lp     = ctx.createBiquadFilter();
-    lp.type      = "lowpass"; lp.frequency.value = 1600; lp.Q.value = 0.6;
-    // Very subtle reverb via delay
-    const delay  = ctx.createDelay(0.06); delay.delayTime.value = 0.055;
-    const fb     = ctx.createGain(); fb.gain.value = 0.18;
-    const wet    = ctx.createGain(); wet.gain.value = 0.22;
-    master.connect(delay); delay.connect(fb); fb.connect(delay);
-    delay.connect(wet); wet.connect(lp);
-    master.connect(lp);
-    lp.connect(ctx.destination);
-    ctxRef.current  = ctx;
-    masterRef.current = master;
-    return { ctx, master };
+  // Build (or return) audio rig
+  const getRig = useCallback((): AudioRig => {
+    if (rigRef.current) return rigRef.current;
+
+    const ctx = new AudioContext();
+
+    // ── Music chain: musicIn → lp → destination (+ reverb taps)
+    const musicIn = ctx.createGain(); musicIn.gain.value = 0; // muted until play
+    const musicLp = ctx.createBiquadFilter();
+    musicLp.type = "lowpass"; musicLp.frequency.value = 4000;
+    musicIn.connect(musicLp); musicLp.connect(ctx.destination);
+
+    // Reverb taps off musicIn
+    const revMix = ctx.createGain(); revMix.gain.value = 0.28;
+    musicIn.connect(revMix);
+    for (const [dt, fb] of [[0.09, 0.38], [0.15, 0.32], [0.24, 0.26]] as [number,number][]) {
+      const delay = ctx.createDelay(0.5); delay.delayTime.value = dt;
+      const fbG   = ctx.createGain(); fbG.gain.value = fb;
+      revMix.connect(delay);
+      delay.connect(fbG); fbG.connect(delay); // feedback loop
+      delay.connect(ctx.destination);
+    }
+
+    // ── Ambient chain: ambIn → destination (clean, no heavy filter)
+    const ambIn = ctx.createGain(); ambIn.gain.value = 1.0;
+    ambIn.connect(ctx.destination);
+
+    const rig: AudioRig = { ctx, musicIn, ambIn };
+    rigRef.current = rig;
+    return rig;
   }, []);
 
-  const scheduleBar = useCallback(
-    (ctx: AudioContext, master: AudioNode, barStart: number, barIdx: number) => {
-      const chord = CHORDS[barIdx % 4];
-      const mel   = MELODY[barIdx % 4];
+  // ── Schedule one bar of dramatic music ──
+  const scheduleBar = useCallback((rig: AudioRig, barStart: number, bi: number) => {
+    const { ctx, musicIn } = rig;
+    const chord = CHORDS[bi % 4];
+    const mel   = MELODY[bi % 4];
 
-      // ── Drums ──
-      for (let b = 0; b < 4; b++) {
-        const t = barStart + b * BEAT;
-        if (b === 0 || b === 2) kick(ctx, master, t);
-        if (b === 1 || b === 3) snare(ctx, master, t);
-        hihat(ctx, master, t, false);
-        hihat(ctx, master, t + BEAT * 0.5, b === 3); // open hat on "ah" of 4
-        // ghost hi-hat on "e" of beat 1 occasionally
-        if (b === 0 && Math.random() > 0.5) hihat(ctx, master, t + BEAT * 0.25);
-      }
+    // String pad — full bar + legato overlap
+    chord.forEach((freq, i) => {
+      stringNote(ctx, musicIn, freq, barStart + i * 0.045, BAR + 0.5, 0.065);
+    });
 
-      // ── Chord strum — notes slightly offset ──
-      chord.forEach((freq, i) => {
-        pianoNote(ctx, master, freq, barStart + i * 0.028, BAR * 0.88, 0.11);
-      });
-      // 2nd voicing hit on beat 3
-      chord.slice(1).forEach((freq, i) => {
-        pianoNote(ctx, master, freq * 2, barStart + BEAT * 2 + i * 0.018, BAR * 0.4, 0.055);
-      });
+    // Melody
+    mel.forEach((freq, b) => {
+      if (freq != null)
+        pianoNote(ctx, musicIn, freq, barStart + b * BEAT + Math.random() * 0.025, BEAT * 1.3, 0.085);
+    });
 
-      // ── Melody ──
-      mel.forEach((freq, b) => {
-        if (freq) pianoNote(ctx, master, freq, barStart + b * BEAT, BEAT * 0.75, 0.09);
-      });
-    },
-    [],
-  );
+    // Heartbeat on bar 1 only
+    if (bi % 2 === 0) heartbeat(ctx, musicIn, barStart);
+  }, []);
 
+  // ── Scheduler ──
   const runScheduler = useCallback(() => {
-    const { ctx, master } = getCtx();
-    while (nextBarRef.current < ctx.currentTime + LOOK) {
-      scheduleBar(ctx, master, nextBarRef.current, barIdxRef.current);
-      nextBarRef.current += BAR;
-      barIdxRef.current  = (barIdxRef.current + 1) % 4;
+    const rig = getRig();
+    while (nextBar.current < rig.ctx.currentTime + LOOK) {
+      scheduleBar(rig, nextBar.current, barIdx.current);
+      nextBar.current += BAR;
+      barIdx.current   = (barIdx.current + 1) % 4;
     }
     timerRef.current = setTimeout(runScheduler, SCHED);
-  }, [getCtx, scheduleBar]);
+  }, [getRig, scheduleBar]);
 
-  const start = useCallback(() => {
-    const { ctx, master } = getCtx();
-    if (ctx.state === "suspended") ctx.resume();
-    nextBarRef.current = ctx.currentTime + 0.05;
-    barIdxRef.current  = 0;
-    crackRef.current   = startCrackle(ctx, master);
+  // ── Start / stop music ──
+  const startMusic = useCallback(() => {
+    const rig = getRig();
+    if (rig.ctx.state === "suspended") rig.ctx.resume();
+    rig.musicIn.gain.cancelScheduledValues(rig.ctx.currentTime);
+    rig.musicIn.gain.linearRampToValueAtTime(0.8, rig.ctx.currentTime + 0.5);
+    nextBar.current  = rig.ctx.currentTime + 0.05;
+    barIdx.current   = 0;
     runScheduler();
     setPlaying(true);
-  }, [getCtx, runScheduler]);
+  }, [getRig, runScheduler]);
 
-  const stop = useCallback(() => {
+  const stopMusic = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
-    crackRef.current?.[0].stop();
-    crackRef.current?.[1].stop();
-    crackRef.current = null;
-    // fade out master
-    if (masterRef.current && ctxRef.current) {
-      masterRef.current.gain.linearRampToValueAtTime(0, ctxRef.current.currentTime + 0.5);
-      setTimeout(() => {
-        ctxRef.current?.close();
-        ctxRef.current  = null;
-        masterRef.current = null;
-      }, 600);
+    const rig = rigRef.current;
+    if (rig) {
+      rig.musicIn.gain.linearRampToValueAtTime(0, rig.ctx.currentTime + 0.9);
     }
     setPlaying(false);
   }, []);
 
   const toggle = useCallback(() => {
-    playing ? stop() : start();
-  }, [playing, start, stop]);
+    playing ? stopMusic() : startMusic();
+  }, [playing, startMusic, stopMusic]);
 
-  // Cleanup on unmount
-  useEffect(() => () => { if (playing) stop(); }, []);
+  // ── Scene + SFX events ──
+  useEffect(() => {
+    const onScene = (e: Event) => {
+      const scene = (e as CustomEvent<string>).detail;
+      const rig = getRig();
+      if (rig.ctx.state === "suspended") rig.ctx.resume();
+
+      if (scene === "rain") {
+        if (!rainRef.current) {
+          rainRef.current = createRain(rig.ctx, rig.ambIn);
+        }
+      } else if (rainRef.current) {
+        // Fade out rain
+        const { sources, gainNode } = rainRef.current;
+        gainNode.gain.linearRampToValueAtTime(0, rig.ctx.currentTime + 1.8);
+        setTimeout(() => {
+          sources.forEach(s => { try { s.stop(); } catch {} });
+          rainRef.current = null;
+        }, 2000);
+      }
+    };
+
+    const onSfx = (e: Event) => {
+      const sfx = (e as CustomEvent<string>).detail;
+      if (sfx === "portal") {
+        const rig = getRig();
+        if (rig.ctx.state === "suspended") rig.ctx.resume();
+        playPortal(rig.ctx, rig.ambIn);
+      }
+    };
+
+    window.addEventListener("game-scene", onScene);
+    window.addEventListener("game-sfx",   onSfx);
+    return () => {
+      window.removeEventListener("game-scene", onScene);
+      window.removeEventListener("game-sfx",   onSfx);
+    };
+  }, [getRig]);
+
+  useEffect(() => () => { stopMusic(); }, []);
 
   return (
     <button
       onClick={toggle}
-      aria-label={playing ? "Pause music" : "Play lo-fi music"}
-      title={playing ? "หยุดเพลง" : "เปิดเพลง lo-fi"}
+      aria-label={playing ? "Pause music" : "Play music"}
+      title={playing ? "หยุดเพลง" : "เปิดเพลงประกอบ"}
       style={{
-        position:     "fixed",
-        bottom:       "20px",
-        right:        "20px",
-        zIndex:       9999,
-        width:        "44px",
-        height:       "44px",
-        borderRadius: "50%",
-        border:       "2px solid #C62828",
-        background:   playing ? "#C62828" : "rgba(255,252,248,0.92)",
-        color:        playing ? "#fff"     : "#C62828",
-        boxShadow:    "0 3px 12px rgba(198,40,40,0.25)",
-        cursor:       "pointer",
-        display:      "flex",
-        alignItems:   "center",
+        position:       "fixed",
+        bottom:         "20px",
+        right:          "20px",
+        zIndex:         9999,
+        width:          "44px",
+        height:         "44px",
+        borderRadius:   "50%",
+        border:         "2px solid #C62828",
+        background:     playing ? "#C62828" : "rgba(255,252,248,0.92)",
+        color:          playing ? "#fff"     : "#C62828",
+        boxShadow:      "0 3px 12px rgba(198,40,40,0.3)",
+        cursor:         "pointer",
+        display:        "flex",
+        alignItems:     "center",
         justifyContent: "center",
         backdropFilter: "blur(8px)",
-        transition:   "all 0.25s ease",
-        padding:      0,
+        transition:     "all 0.25s ease",
+        padding:        0,
       }}
     >
       {playing ? (
-        /* Pause icon */
         <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
           <rect x="3" y="2" width="4" height="12" rx="1"/>
           <rect x="9" y="2" width="4" height="12" rx="1"/>
         </svg>
       ) : (
-        /* Music note icon */
         <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor">
           <path d="M9 3v9.5A3 3 0 1 0 11 10V6.5l5-1.5V3L9 3z"/>
         </svg>
       )}
-
-      {/* Spinning vinyl ring when playing */}
       {playing && (
         <span style={{
           position:     "absolute",
-          inset:        "-4px",
+          inset:        "-5px",
           borderRadius: "50%",
-          border:       "1.5px dashed rgba(198,40,40,0.4)",
-          animation:    "spin 4s linear infinite",
-          pointerEvents: "none",
+          border:       "1.5px dashed rgba(198,40,40,0.45)",
+          animation:    "lfspin 5s linear infinite",
+          pointerEvents:"none",
         }}/>
       )}
-
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <style>{`@keyframes lfspin { to { transform: rotate(360deg); } }`}</style>
     </button>
   );
 }

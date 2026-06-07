@@ -258,8 +258,23 @@ export default function QuizPage() {
 
   const handleAnswer = useCallback((cake: CakeType) => {
     setScores(prev => ({ ...prev, [cake]: prev[cake] + 1 }));
+    // Portal SFX when user picks a door (beat 5 = Q3 "choose a door")
+    if (beatIdx === 5) {
+      window.dispatchEvent(new CustomEvent("game-sfx", { detail: "portal" }));
+    }
     nextBeat();
-  }, [nextBeat]);
+  }, [nextBeat, beatIdx]);
+
+  // Rain ambience on city/rain scene (beat 0, illus 0)
+  useEffect(() => {
+    if (phase !== "beats") {
+      window.dispatchEvent(new CustomEvent("game-scene", { detail: "none" }));
+      return;
+    }
+    const b = BEATS[beatIdx];
+    const isRain = b && b.illus === 0;
+    window.dispatchEvent(new CustomEvent("game-scene", { detail: isRain ? "rain" : "none" }));
+  }, [phase, beatIdx]);
 
   const handleReveal = useCallback(() => {
     const type = calcResult(scores);
