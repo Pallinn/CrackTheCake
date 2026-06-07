@@ -67,13 +67,32 @@ export function IllustrationCity() {
         <circle cx="300" cy="28" r="16" stroke={Y} strokeWidth="1.5" fill="rgba(255,248,220,0.5)"/>
       </g>
 
-      {/* Animated: rain slides downward */}
-      <g>
-        {Array.from({length:24}).map((_,i)=>{
-          const x = 6+(i*14)%336, y = (i*19)%60;
-          return <line key={i} x1={x} y1={y} x2={x-5} y2={y+20} stroke={R} strokeWidth="1.3" opacity="0.4"/>;
+      {/* Animated: rain — 3 layers with different speeds/opacity for smooth texture */}
+      {/* Layer 1 — medium, main rain */}
+      <g opacity="0.45">
+        {Array.from({length:28}).map((_,i)=>{
+          const x = 4+(i*12)%340, y = (i*17)%65;
+          const len = 14+((i*7)%10);
+          return <line key={i} x1={x} y1={y} x2={x-4} y2={y+len} stroke={R} strokeWidth={1+(i%3)*0.4}/>;
         })}
-        <animateTransform attributeName="transform" type="translate" from="0,0" to="-5,24" dur="1.2s" repeatCount="indefinite"/>
+        <animateTransform attributeName="transform" type="translate" from="0,0" to="-5,24" dur="1.1s" repeatCount="indefinite"/>
+      </g>
+      {/* Layer 2 — lighter, offset horizontally */}
+      <g opacity="0.25">
+        {Array.from({length:20}).map((_,i)=>{
+          const x = 10+(i*17)%330, y = (i*23+8)%70;
+          const len = 18+((i*11)%14);
+          return <line key={i} x1={x} y1={y} x2={x-6} y2={y+len} stroke={R} strokeWidth="1.1"/>;
+        })}
+        <animateTransform attributeName="transform" type="translate" from="0,0" to="-7,30" dur="1.5s" repeatCount="indefinite"/>
+      </g>
+      {/* Layer 3 — very light background drizzle */}
+      <g opacity="0.15">
+        {Array.from({length:16}).map((_,i)=>{
+          const x = 2+(i*21)%338, y = (i*31+15)%75;
+          return <line key={i} x1={x} y1={y} x2={x-3} y2={y+22} stroke={K} strokeWidth="0.8"/>;
+        })}
+        <animateTransform attributeName="transform" type="translate" from="0,0" to="-4,28" dur="2.0s" repeatCount="indefinite"/>
       </g>
 
       {/* Puddles */}
@@ -266,31 +285,38 @@ export function IllustrationChild() {
 
 /* ═══════════════════════════════════════════════════════════════
    SCENE 3 — Corridor with 5 coloured doors
-   Floating: light pulses under each door, dust motes drift
+   Adult + child holding hands walking toward the doors
+   Floating: light pulses, dust motes, figures breathe slightly
    ═══════════════════════════════════════════════════════════════ */
 export function IllustrationDoors() {
   const doorColors = [R, "#E65100", "#FBC02D", "#B71C1C", "#4A0000"];
   const doorX = [8, 72, 136, 200, 264];
 
   return (
-    <svg viewBox="0 0 340 250" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full max-w-sm mx-auto">
+    <svg viewBox="0 0 340 260" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full max-w-sm mx-auto">
       <SkFilter id="sk-doors"/>
+      <defs>
+        <filter id="sk-figures" x="-8%" y="-8%" width="116%" height="116%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.045" numOctaves="3" seed="22" result="n"/>
+          <feDisplacementMap in="SourceGraphic" in2="n" scale="2.5" xChannelSelector="R" yChannelSelector="G"/>
+        </filter>
+      </defs>
 
       {/* Static: corridor perspective */}
       <g filter="url(#sk-doors)" strokeLinecap="round">
         {/* floor */}
-        <line x1="0" y1="240" x2="340" y2="240" stroke={K} strokeWidth="3"/>
+        <line x1="0" y1="250" x2="340" y2="250" stroke={K} strokeWidth="3"/>
         {/* ceiling */}
         <line x1="0" y1="0"   x2="340" y2="0"   stroke={K} strokeWidth="2"/>
         {/* wall lines converging to centre */}
         <line x1="0"   y1="0"   x2="170" y2="95"  stroke={K} strokeWidth="1.8" opacity="0.4"/>
         <line x1="340" y1="0"   x2="170" y2="95"  stroke={K} strokeWidth="1.8" opacity="0.4"/>
-        <line x1="0"   y1="240" x2="170" y2="95"  stroke={K} strokeWidth="1.8" opacity="0.4"/>
-        <line x1="340" y1="240" x2="170" y2="95"  stroke={K} strokeWidth="1.8" opacity="0.4"/>
+        <line x1="0"   y1="250" x2="170" y2="95"  stroke={K} strokeWidth="1.8" opacity="0.4"/>
+        <line x1="340" y1="250" x2="170" y2="95"  stroke={K} strokeWidth="1.8" opacity="0.4"/>
         {/* perspective floor tiles */}
-        {[200,170,148].map((y,i)=>{
-          const sp = (240-y)/240*170;
-          return <line key={i} x1={170-sp} y1={y} x2={170+sp} y2={y} stroke={K} strokeWidth="1" opacity="0.2"/>;
+        {[210,182,160].map((y,i)=>{
+          const sp = (250-y)/250*170;
+          return <line key={i} x1={170-sp} y1={y} x2={170+sp} y2={y} stroke={K} strokeWidth="1" opacity="0.18"/>;
         })}
         {/* ceiling lamp */}
         <line x1="170" y1="0" x2="170" y2="20" stroke={K} strokeWidth="2"/>
@@ -299,39 +325,91 @@ export function IllustrationDoors() {
         {/* 5 doors side by side */}
         {doorX.map((x, i) => (
           <g key={i}>
-            <rect x={x} y={30} width="60" height="210" rx="5" fill={CREAM} stroke={doorColors[i]} strokeWidth="2.5"/>
-            <rect x={x+6} y={38} width="48" height="195" rx="3" fill="rgba(198,40,40,0.03)" stroke={doorColors[i]} strokeWidth="1.2"/>
+            <rect x={x} y={30} width="60" height="220" rx="5" fill={CREAM} stroke={doorColors[i]} strokeWidth="2.5"/>
+            <rect x={x+6} y={38} width="48" height="205" rx="3" fill="rgba(198,40,40,0.03)" stroke={doorColors[i]} strokeWidth="1.2"/>
             {/* panels */}
             <rect x={x+10} y={48}  width="18" height="70" rx="3" stroke={doorColors[i]} strokeWidth="1" fill="none" opacity="0.4"/>
             <rect x={x+32} y={48}  width="18" height="70" rx="3" stroke={doorColors[i]} strokeWidth="1" fill="none" opacity="0.4"/>
-            <rect x={x+10} y={128} width="40" height="90" rx="3" stroke={doorColors[i]} strokeWidth="1" fill="none" opacity="0.4"/>
+            <rect x={x+10} y={128} width="40" height="96" rx="3" stroke={doorColors[i]} strokeWidth="1" fill="none" opacity="0.4"/>
             {/* knob */}
-            <circle cx={x+46} cy={180} r="6" fill={Y} stroke={doorColors[i]} strokeWidth="1.5"/>
-            <circle cx={x+46} cy={180} r="2.5" fill={doorColors[i]}/>
+            <circle cx={x+46} cy={188} r="6" fill={Y} stroke={doorColors[i]} strokeWidth="1.5"/>
+            <circle cx={x+46} cy={188} r="2.5" fill={doorColors[i]}/>
           </g>
         ))}
       </g>
 
       {/* Animated: light glow pulsing under each door */}
       {doorX.map((x, i) => (
-        <ellipse key={i} cx={x+30} cy={241} rx={28} ry={6} fill={doorColors[i]} fillOpacity="0.25">
-          <animate attributeName="fill-opacity" values="0.1;0.4;0.1" dur={`${2.5+i*0.4}s`} repeatCount="indefinite"/>
-          <animate attributeName="ry" values="4;8;4" dur={`${2.5+i*0.4}s`} repeatCount="indefinite"/>
+        <ellipse key={i} cx={x+30} cy={251} rx={28} ry={7} fill={doorColors[i]} fillOpacity="0.25">
+          <animate attributeName="fill-opacity" values="0.1;0.45;0.1" dur={`${2.5+i*0.4}s`} repeatCount="indefinite"/>
+          <animate attributeName="ry" values="4;10;4" dur={`${2.5+i*0.4}s`} repeatCount="indefinite"/>
         </ellipse>
       ))}
 
       {/* Animated: ceiling lamp glow */}
-      <ellipse cx="170" cy="75" rx="55" ry="35" fill={Y} fillOpacity="0.07">
-        <animate attributeName="fill-opacity" values="0.04;0.14;0.04" dur="4s" repeatCount="indefinite"/>
+      <ellipse cx="170" cy="75" rx="65" ry="42" fill={Y} fillOpacity="0.07">
+        <animate attributeName="fill-opacity" values="0.04;0.16;0.04" dur="4s" repeatCount="indefinite"/>
+        <animate attributeName="rx" values="55;70;55" dur="4s" repeatCount="indefinite"/>
       </ellipse>
 
       {/* Animated: floating dust motes in corridor */}
-      {[[80,130],[170,80],[260,140],[120,190],[220,100]].map(([cx,cy],i)=>(
-        <circle key={i} cx={cx} cy={cy} r="2" fill={Y} opacity="0.4">
-          <animate attributeName="cy" values={`${cy};${cy-18};${cy}`} dur={`${4+i*0.8}s`} repeatCount="indefinite"/>
-          <animate attributeName="opacity" values="0.1;0.5;0.1" dur={`${4+i*0.8}s`} repeatCount="indefinite"/>
+      {[[55,140],[170,85],[285,145],[110,200],[230,105],[170,165]].map(([cx,cy],i)=>(
+        <circle key={i} cx={cx} cy={cy} r={1.5+i%2} fill={Y} opacity="0.4">
+          <animate attributeName="cy" values={`${cy};${cy-20};${cy}`} dur={`${3.5+i*0.9}s`} repeatCount="indefinite"/>
+          <animate attributeName="opacity" values="0.1;0.55;0.1" dur={`${3.5+i*0.9}s`} repeatCount="indefinite"/>
         </circle>
       ))}
+
+      {/* ── TWO FIGURES: adult + child holding hands, viewed from behind ── */}
+      <g filter="url(#sk-figures)">
+        {/* subtle shadow on floor */}
+        <ellipse cx="178" cy="251" rx="52" ry="6" fill="rgba(26,26,26,0.18)"/>
+
+        {/* ── ADULT (right, taller) — viewed from behind ── */}
+        {/* head */}
+        <circle cx="196" cy="182" r="13" fill={K} opacity="0.82"/>
+        {/* hair tufts */}
+        <path d="M183 178 Q186 170 196 168 Q206 170 209 178" fill={K} opacity="0.9"/>
+        {/* shoulders + body */}
+        <path d="M178 195 Q186 192 196 194 Q206 192 214 195 L212 248 Q196 252 180 248Z" fill={K} opacity="0.8"/>
+        {/* left arm reaching toward child */}
+        <path d="M178 202 Q168 210 162 222" stroke={K} strokeWidth="9" strokeLinecap="round" fill="none" opacity="0.82"/>
+        {/* right arm */}
+        <path d="M214 202 Q220 215 218 230" stroke={K} strokeWidth="8" strokeLinecap="round" fill="none" opacity="0.7"/>
+        {/* legs */}
+        <path d="M182 248 Q180 256 180 262" stroke={K} strokeWidth="10" strokeLinecap="round" fill="none" opacity="0.82"/>
+        <path d="M210 248 Q212 256 211 262" stroke={K} strokeWidth="10" strokeLinecap="round" fill="none" opacity="0.82"/>
+
+        {/* ── CHILD (left, shorter) — viewed from behind ── */}
+        {/* head */}
+        <circle cx="148" cy="196" r="10" fill={K} opacity="0.8"/>
+        {/* hair */}
+        <path d="M138 194 Q141 187 148 185 Q155 187 158 194" fill={K} opacity="0.85"/>
+        {/* shoulders + body */}
+        <path d="M135 207 Q141 204 148 206 Q155 204 161 207 L160 248 Q148 252 136 248Z" fill={K} opacity="0.78"/>
+        {/* right arm reaching toward adult */}
+        <path d="M161 213 Q165 218 164 224" stroke={K} strokeWidth="7" strokeLinecap="round" fill="none" opacity="0.8"/>
+        {/* left arm swing */}
+        <path d="M135 211 Q130 221 132 232" stroke={K} strokeWidth="7" strokeLinecap="round" fill="none" opacity="0.65"/>
+        {/* legs */}
+        <path d="M138 248 Q136 256 137 262" stroke={K} strokeWidth="9" strokeLinecap="round" fill="none" opacity="0.8"/>
+        <path d="M158 248 Q160 256 159 262" stroke={K} strokeWidth="9" strokeLinecap="round" fill="none" opacity="0.8"/>
+
+        {/* ── CLASPED HANDS between them ── */}
+        <ellipse cx="163" cy="224" rx="7" ry="5" fill={K} opacity="0.85"/>
+        {/* small fingers suggestion */}
+        <path d="M158 221 Q163 218 168 221" stroke={K} strokeWidth="2.5" strokeLinecap="round" fill="none" opacity="0.6"/>
+      </g>
+
+      {/* Gentle body-sway animation overlay (subtle breathing feel) */}
+      <g opacity="0">
+        <animate attributeName="opacity" values="0;0;0" dur="6s" repeatCount="indefinite"/>
+      </g>
+
+      {/* Warm glow from doors falling on figures */}
+      <ellipse cx="173" cy="245" rx="50" ry="12" fill={Y} fillOpacity="0.08">
+        <animate attributeName="fill-opacity" values="0.05;0.14;0.05" dur="3s" repeatCount="indefinite"/>
+      </ellipse>
     </svg>
   );
 }
