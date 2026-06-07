@@ -308,11 +308,6 @@ export function IllustrationDoors() {
         <line x1="0" y1="250" x2="340" y2="250" stroke={K} strokeWidth="3"/>
         {/* ceiling */}
         <line x1="0" y1="0"   x2="340" y2="0"   stroke={K} strokeWidth="2"/>
-        {/* wall lines converging to centre */}
-        <line x1="0"   y1="0"   x2="170" y2="95"  stroke={K} strokeWidth="1.8" opacity="0.4"/>
-        <line x1="340" y1="0"   x2="170" y2="95"  stroke={K} strokeWidth="1.8" opacity="0.4"/>
-        <line x1="0"   y1="250" x2="170" y2="95"  stroke={K} strokeWidth="1.8" opacity="0.4"/>
-        <line x1="340" y1="250" x2="170" y2="95"  stroke={K} strokeWidth="1.8" opacity="0.4"/>
         {/* perspective floor tiles */}
         {[210,182,160].map((y,i)=>{
           const sp = (250-y)/250*170;
