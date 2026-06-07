@@ -3,26 +3,28 @@
 import { useRef, useState, useCallback, useEffect } from "react";
 
 // ─── Music constants ──────────────────────────────────────────────────────────
-const BPM   = 65;
-const BEAT  = 60 / BPM;   // ~0.923 s
-const BAR   = BEAT * 4;   // ~3.69 s
-const LOOK  = 0.18;
+const BPM   = 56;           // very slow, calm
+const BEAT  = 60 / BPM;    // ~1.07 s
+const BAR   = BEAT * 4;    // ~4.29 s
+const LOOK  = 0.20;
 const SCHED = 80;
 
-// Cinematic 4-chord loop: Am → F → C → G
-const CHORDS = [
-  [220.00, 261.63, 329.63, 392.00],  // Am7
-  [174.61, 220.00, 261.63, 329.63],  // Fmaj7
-  [130.81, 164.81, 196.00, 246.94],  // Cmaj7
-  [196.00, 246.94, 293.66, 369.99],  // Gmaj7
+// Calm 4-chord progression: Cmaj7 → Am7 → Fmaj7 → Gsus4
+// Voiced in mid register for warmth
+const CHORDS: [number, number, number, number][] = [
+  [130.81, 164.81, 196.00, 246.94],  // Cmaj7  C3 E3 G3 B3
+  [110.00, 130.81, 164.81, 196.00],  // Am7    A2 C3 E3 G3
+  [87.31,  110.00, 130.81, 164.81],  // Fmaj7  F2 A2 C3 E3
+  [98.00,  130.81, 146.83, 196.00],  // Gsus4  G2 C3 D3 G3
 ];
 
-// Sparse emotional melody (null = rest)
+// Melody line — one or two notes per bar, higher octave
+// null = rest, plays over 4 beats
 const MELODY: (number | null)[][] = [
-  [null,   523.25, null,   440.00],
-  [392.00, null,   440.00, null  ],
-  [392.00, 329.63, null,   261.63],
-  [null,   440.00, 392.00, null  ],
+  [null,   523.25, null,   587.33],  // Cmaj7 bar
+  [659.25, null,   587.33, null  ],  // Am7 bar
+  [523.25, 493.88, null,   440.00],  // Fmaj7 bar
+  [null,   493.88, 523.25, null  ],  // Gsus4 bar
 ];
 
 // ─── Synth helpers ────────────────────────────────────────────────────────────
@@ -35,55 +37,77 @@ function noiseBuf(ctx: AudioContext, secs: number) {
   return b;
 }
 
-/** Dramatic string pad: 3 detuned saws → warm lowpass → slow envelope */
-function stringNote(ctx: AudioContext, dest: AudioNode, freq: number, t: number, dur: number, vol = 0.07) {
-  const out = ctx.createGain();
-  out.gain.setValueAtTime(0, t);
-  out.gain.linearRampToValueAtTime(vol, t + 0.75);
-  out.gain.setValueAtTime(vol * 0.85, t + dur - 1.0);
-  out.gain.linearRampToValueAtTime(0, t + dur);
-  out.connect(dest);
-  for (const det of [-9, 0, 9]) {
-    const osc = ctx.createOscillator();
-    osc.type = "sawtooth";
-    osc.frequency.value = freq;
-    osc.detune.value = det;
-    const lp = ctx.createBiquadFilter();
-    lp.type = "lowpass"; lp.frequency.value = 1500; lp.Q.value = 0.4;
-    osc.connect(lp); lp.connect(out);
-    osc.start(t); osc.stop(t + dur + 0.1);
-  }
+/**
+ * Realistic-ish piano note: blends sine harmonics (1st+2nd+3rd)
+ * with a tiny percussive noise click on the attack.
+ */
+function pianoNote(
+  ctx: AudioContext, dest: AudioNode,
+  freq: number, t: number, dur: number, vol = 0.14,
+) {
+  const master = ctx.createGain();
+  master.gain.setValueAtTime(0, t);
+  master.gain.linearRampToValueAtTime(vol,        t + 0.018); // fast attack
+  master.gain.setValueAtTime(vol * 0.72,          t + 0.12);  // decay to sustain
+  master.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  master.connect(dest);
+
+  // Fundamental
+  const o1 = ctx.createOscillator(); o1.type = "sine";
+  o1.frequency.value = freq;
+  const g1 = ctx.createGain(); g1.gain.value = 1.0;
+  o1.connect(g1); g1.connect(master);
+  o1.start(t); o1.stop(t + dur + 0.05);
+
+  // 2nd harmonic (octave) — adds body
+  const o2 = ctx.createOscillator(); o2.type = "sine";
+  o2.frequency.value = freq * 2;
+  const g2 = ctx.createGain(); g2.gain.value = 0.28;
+  o2.connect(g2); g2.connect(master);
+  o2.start(t); o2.stop(t + dur * 0.7);
+
+  // 3rd harmonic — gives slight shimmer
+  const o3 = ctx.createOscillator(); o3.type = "sine";
+  o3.frequency.value = freq * 3;
+  const g3 = ctx.createGain(); g3.gain.value = 0.10;
+  o3.connect(g3); g3.connect(master);
+  o3.start(t); o3.stop(t + dur * 0.4);
+
+  // Key-click noise burst (very brief, like hammer hitting string)
+  const click = ctx.createBufferSource();
+  click.buffer = noiseBuf(ctx, 0.025);
+  const clickLp = ctx.createBiquadFilter(); clickLp.type = "bandpass";
+  clickLp.frequency.value = freq * 4; clickLp.Q.value = 1.5;
+  const clickG = ctx.createGain(); clickG.gain.value = vol * 0.18;
+  click.connect(clickLp); clickLp.connect(clickG); clickG.connect(dest);
+  click.start(t);
 }
 
-/** Cinematic piano: triangle osc → soft lowpass */
-function pianoNote(ctx: AudioContext, dest: AudioNode, freq: number, t: number, dur: number, vol = 0.09) {
-  const osc  = ctx.createOscillator();
-  osc.type   = "triangle";
+/**
+ * Arpeggiate a chord: plays notes one by one, spaced evenly.
+ * ascending = true for upward sweep.
+ */
+function arpChord(
+  ctx: AudioContext, dest: AudioNode,
+  notes: number[], barStart: number, noteDur: number,
+  spacing = 0.18, vol = 0.11,
+) {
+  notes.forEach((freq, i) => {
+    pianoNote(ctx, dest, freq, barStart + i * spacing, noteDur, vol - i * 0.012);
+  });
+}
+
+/** Very soft pad swell — barely audible sine tones for warmth underneath */
+function padNote(ctx: AudioContext, dest: AudioNode, freq: number, t: number, dur: number, vol = 0.03) {
+  const osc  = ctx.createOscillator(); osc.type = "sine";
   osc.frequency.value = freq;
-  osc.detune.value    = (Math.random() - 0.5) * 14;
-  const lp   = ctx.createBiquadFilter();
-  lp.type    = "lowpass"; lp.frequency.value = 1300;
   const gain = ctx.createGain();
   gain.gain.setValueAtTime(0, t);
-  gain.gain.linearRampToValueAtTime(vol, t + 0.05);
-  gain.gain.setValueAtTime(vol * 0.6, t + 0.4);
-  gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
-  osc.connect(lp); lp.connect(gain); gain.connect(dest);
+  gain.gain.linearRampToValueAtTime(vol, t + 1.2);
+  gain.gain.setValueAtTime(vol,           t + dur - 1.0);
+  gain.gain.linearRampToValueAtTime(0,    t + dur);
+  osc.connect(gain); gain.connect(dest);
   osc.start(t); osc.stop(t + dur + 0.05);
-}
-
-/** Double heartbeat kick on bar 1 */
-function heartbeat(ctx: AudioContext, dest: AudioNode, t: number) {
-  for (const off of [0, 0.13]) {
-    const osc  = ctx.createOscillator();
-    osc.frequency.setValueAtTime(68, t + off);
-    osc.frequency.exponentialRampToValueAtTime(38, t + off + 0.18);
-    const gain = ctx.createGain();
-    gain.gain.setValueAtTime(0.4, t + off);
-    gain.gain.exponentialRampToValueAtTime(0.001, t + off + 0.25);
-    osc.connect(gain); gain.connect(dest);
-    osc.start(t + off); osc.stop(t + off + 0.28);
-  }
 }
 
 // ─── Rain ambience ────────────────────────────────────────────────────────────
@@ -223,14 +247,14 @@ export default function LofiPlayer() {
     musicLp.type = "lowpass"; musicLp.frequency.value = 4000;
     musicIn.connect(musicLp); musicLp.connect(ctx.destination);
 
-    // Reverb taps off musicIn
-    const revMix = ctx.createGain(); revMix.gain.value = 0.28;
+    // Room reverb — longer taps for piano hall feel
+    const revMix = ctx.createGain(); revMix.gain.value = 0.35;
     musicIn.connect(revMix);
-    for (const [dt, fb] of [[0.09, 0.38], [0.15, 0.32], [0.24, 0.26]] as [number,number][]) {
-      const delay = ctx.createDelay(0.5); delay.delayTime.value = dt;
+    for (const [dt, fb] of [[0.12, 0.32], [0.22, 0.26], [0.38, 0.20]] as [number,number][]) {
+      const delay = ctx.createDelay(1.0); delay.delayTime.value = dt;
       const fbG   = ctx.createGain(); fbG.gain.value = fb;
       revMix.connect(delay);
-      delay.connect(fbG); fbG.connect(delay); // feedback loop
+      delay.connect(fbG); fbG.connect(delay);
       delay.connect(ctx.destination);
     }
 
@@ -243,25 +267,33 @@ export default function LofiPlayer() {
     return rig;
   }, []);
 
-  // ── Schedule one bar of dramatic music ──
+  // ── Schedule one bar of calm piano music ──
   const scheduleBar = useCallback((rig: AudioRig, barStart: number, bi: number) => {
     const { ctx, musicIn } = rig;
     const chord = CHORDS[bi % 4];
     const mel   = MELODY[bi % 4];
 
-    // String pad — full bar + legato overlap
-    chord.forEach((freq, i) => {
-      stringNote(ctx, musicIn, freq, barStart + i * 0.045, BAR + 0.5, 0.065);
-    });
+    // ① Bass note (root, one octave below) — anchors the harmony
+    pianoNote(ctx, musicIn, chord[0] * 0.5, barStart, BEAT * 3.5, 0.10);
 
-    // Melody
+    // ② Arpeggiated chord — sweeps upward over the first 2 beats
+    arpChord(ctx, musicIn, chord, barStart + BEAT * 0.5, BEAT * 2.8, 0.20, 0.11);
+
+    // ③ Inner voice re-hit on beat 3 (gentle, softer)
+    pianoNote(ctx, musicIn, chord[1], barStart + BEAT * 2.2, BEAT * 1.8, 0.07);
+    pianoNote(ctx, musicIn, chord[2], barStart + BEAT * 2.4, BEAT * 1.8, 0.06);
+
+    // ④ Melody — sparse, 1–2 notes per bar, slightly rubato
     mel.forEach((freq, b) => {
-      if (freq != null)
-        pianoNote(ctx, musicIn, freq, barStart + b * BEAT + Math.random() * 0.025, BEAT * 1.3, 0.085);
+      if (freq != null) {
+        const rub = (Math.random() - 0.5) * 0.06; // subtle timing humanisation
+        pianoNote(ctx, musicIn, freq, barStart + b * BEAT + rub, BEAT * 1.6, 0.09);
+      }
     });
 
-    // Heartbeat on bar 1 only
-    if (bi % 2 === 0) heartbeat(ctx, musicIn, barStart);
+    // ⑤ Barely-audible pad root for warmth
+    padNote(ctx, musicIn, chord[0], barStart, BAR + 0.3, 0.028);
+    padNote(ctx, musicIn, chord[2], barStart, BAR + 0.3, 0.018);
   }, []);
 
   // ── Scheduler ──
