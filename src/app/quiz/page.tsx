@@ -258,8 +258,8 @@ export default function QuizPage() {
 
   const handleAnswer = useCallback((cake: CakeType) => {
     setScores(prev => ({ ...prev, [cake]: prev[cake] + 1 }));
-    // Portal SFX when user picks a door (beat 5 = Q3 "choose a door")
-    if (beatIdx === 5) {
+    // Portal SFX when user picks a door (beat 8 = Q3 "choose a door")
+    if (beatIdx === 8) {
       window.dispatchEvent(new CustomEvent("game-sfx", { detail: "portal" }));
     }
     nextBeat();

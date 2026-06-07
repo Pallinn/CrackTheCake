@@ -116,7 +116,7 @@ type RainState = { sources: AudioBufferSourceNode[]; gainNode: GainNode };
 function createRain(ctx: AudioContext, dest: AudioNode): RainState {
   const master = ctx.createGain();
   master.gain.setValueAtTime(0, ctx.currentTime);
-  master.gain.linearRampToValueAtTime(0.55, ctx.currentTime + 2.5);
+  master.gain.linearRampToValueAtTime(0.27, ctx.currentTime + 2.5);
   master.connect(dest);
 
   const secs  = 4;
@@ -126,21 +126,21 @@ function createRain(ctx: AudioContext, dest: AudioNode): RainState {
   // Layer 1 — high hiss
   const s1 = ctx.createBufferSource(); s1.buffer = base; s1.loop = true;
   const bp1 = ctx.createBiquadFilter(); bp1.type = "bandpass"; bp1.frequency.value = 3200; bp1.Q.value = 1.0;
-  const g1  = ctx.createGain(); g1.gain.value = 0.55;
+  const g1  = ctx.createGain(); g1.gain.value = 0.28;
   s1.connect(bp1); bp1.connect(g1); g1.connect(master); s1.start();
   sources.push(s1);
 
-  // Layer 2 — mid drops (slightly slower playback for texture variation)
+  // Layer 2 — mid drops
   const s2 = ctx.createBufferSource(); s2.buffer = noiseBuf(ctx, secs + 1); s2.loop = true; s2.playbackRate.value = 0.72;
   const bp2 = ctx.createBiquadFilter(); bp2.type = "bandpass"; bp2.frequency.value = 650; bp2.Q.value = 1.4;
-  const g2  = ctx.createGain(); g2.gain.value = 0.32;
+  const g2  = ctx.createGain(); g2.gain.value = 0.16;
   s2.connect(bp2); bp2.connect(g2); g2.connect(master); s2.start();
   sources.push(s2);
 
   // Layer 3 — low patter
   const s3 = ctx.createBufferSource(); s3.buffer = noiseBuf(ctx, secs + 2); s3.loop = true; s3.playbackRate.value = 0.45;
   const lp3 = ctx.createBiquadFilter(); lp3.type = "lowpass"; lp3.frequency.value = 300;
-  const g3  = ctx.createGain(); g3.gain.value = 0.14;
+  const g3  = ctx.createGain(); g3.gain.value = 0.07;
   s3.connect(lp3); lp3.connect(g3); g3.connect(master); s3.start();
   sources.push(s3);
 
@@ -157,7 +157,7 @@ function playPortal(ctx: AudioContext, dest: AudioNode) {
   const rLp  = ctx.createBiquadFilter(); rLp.type = "lowpass"; rLp.frequency.value = 160;
   const rG   = ctx.createGain();
   rG.gain.setValueAtTime(0, now);
-  rG.gain.linearRampToValueAtTime(0.55, now + 0.18);
+  rG.gain.linearRampToValueAtTime(0.27, now + 0.18);
   rG.gain.linearRampToValueAtTime(0, now + 0.6);
   rSrc.connect(rLp); rLp.connect(rG); rG.connect(dest);
   rSrc.start(now);
@@ -169,19 +169,19 @@ function playPortal(ctx: AudioContext, dest: AudioNode) {
   sweep.frequency.exponentialRampToValueAtTime(2400, now + 1.0);
   const sG = ctx.createGain();
   sG.gain.setValueAtTime(0, now + 0.08);
-  sG.gain.linearRampToValueAtTime(0.55, now + 0.3);
+  sG.gain.linearRampToValueAtTime(0.27, now + 0.3);
   sG.gain.linearRampToValueAtTime(0, now + 1.05);
   sweep.connect(sG); sG.connect(dest);
   sweep.start(now + 0.08); sweep.stop(now + 1.1);
 
   // 3. Crystal bell harmonics at the peak
   const bells: [number, number, number][] = [
-    [880,  0.32, 0.68],
-    [1320, 0.22, 0.73],
-    [1760, 0.18, 0.78],
-    [2200, 0.13, 0.83],
-    [660,  0.28, 0.71],
-    [2640, 0.09, 0.88],
+    [880,  0.16, 0.68],
+    [1320, 0.11, 0.73],
+    [1760, 0.09, 0.78],
+    [2200, 0.065,0.83],
+    [660,  0.14, 0.71],
+    [2640, 0.045,0.88],
   ];
   for (const [freq, vol, delay] of bells) {
     const osc  = ctx.createOscillator();
@@ -201,7 +201,7 @@ function playPortal(ctx: AudioContext, dest: AudioNode) {
   const wHp  = ctx.createBiquadFilter(); wHp.type = "highpass"; wHp.frequency.value = 3500;
   const wG   = ctx.createGain();
   wG.gain.setValueAtTime(0, now + 0.55);
-  wG.gain.linearRampToValueAtTime(0.28, now + 0.72);
+  wG.gain.linearRampToValueAtTime(0.14, now + 0.72);
   wG.gain.linearRampToValueAtTime(0, now + 1.05);
   wSrc.connect(wHp); wHp.connect(wG); wG.connect(dest);
   wSrc.start(now + 0.55);
@@ -213,7 +213,7 @@ function playPortal(ctx: AudioContext, dest: AudioNode) {
   ether.frequency.exponentialRampToValueAtTime(1800, now + 2.5);
   const eG = ctx.createGain();
   eG.gain.setValueAtTime(0, now + 0.9);
-  eG.gain.linearRampToValueAtTime(0.12, now + 1.1);
+  eG.gain.linearRampToValueAtTime(0.06, now + 1.1);
   eG.gain.exponentialRampToValueAtTime(0.001, now + 2.5);
   ether.connect(eG); eG.connect(dest);
   ether.start(now + 0.9); ether.stop(now + 2.6);
@@ -230,6 +230,7 @@ interface AudioRig {
 export default function LofiPlayer() {
   const [playing, setPlaying] = useState(false);
   const rigRef    = useRef<AudioRig | null>(null);
+  const autoRef   = useRef(false); // prevent double auto-start
   const timerRef  = useRef<ReturnType<typeof setTimeout> | null>(null);
   const nextBar   = useRef(0);
   const barIdx    = useRef(0);
@@ -331,6 +332,22 @@ export default function LofiPlayer() {
   const toggle = useCallback(() => {
     playing ? stopMusic() : startMusic();
   }, [playing, startMusic, stopMusic]);
+
+  // ── Auto-start music on first user interaction ──
+  useEffect(() => {
+    const auto = () => {
+      if (autoRef.current) return;
+      autoRef.current = true;
+      startMusic();
+    };
+    document.addEventListener("click",      auto, { once: true });
+    document.addEventListener("touchstart", auto, { once: true });
+    return () => {
+      document.removeEventListener("click",      auto);
+      document.removeEventListener("touchstart", auto);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ── Scene + SFX events ──
   useEffect(() => {
