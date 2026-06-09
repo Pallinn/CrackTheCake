@@ -350,23 +350,31 @@ function ShareBar({ type, name, cake }: { type: CakeType; name: string; cake: Ca
     showToast("⏳ กำลังสร้างรูป...");
     const dataUrl = await generateShareImage(type, name, cake);
 
-    // Convert dataURL → Blob → File
     const res  = await fetch(dataUrl);
     const blob = await res.blob();
     const file = new File([blob], `crackthecake-${type}.png`, { type: "image/png" });
 
-    // Try Web Share API first (works on iOS & Android)
-    if (navigator.canShare?.({ files: [file] })) {
+    // iOS / Android — try Web Share with file attachment
+    if (navigator.share) {
       try {
         await navigator.share({ files: [file], title: "CrackTheCake" });
         return;
       } catch (e) {
-        // user cancelled — fall through
         if ((e as Error).name === "AbortError") return;
+        // file share failed — fall through to next method
       }
     }
 
-    // Desktop / browsers without file sharing → trigger download
+    // iOS Safari fallback — open image in new tab, user long-presses to save
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (isIOS) {
+      const blobUrl = URL.createObjectURL(blob);
+      window.open(blobUrl, "_blank");
+      showToast("📱 กดค้างที่รูป แล้วเลือก 'บันทึกรูปภาพ'");
+      return;
+    }
+
+    // Desktop — trigger file download
     const a = document.createElement("a");
     a.href     = URL.createObjectURL(blob);
     a.download = `crackthecake-${type}.png`;
