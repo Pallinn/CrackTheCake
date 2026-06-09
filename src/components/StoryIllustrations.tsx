@@ -1,4 +1,5 @@
 "use client";
+import { useState, useEffect } from "react";
 
 const R = "#C62828";
 const Y = "#FBC02D";
@@ -164,156 +165,295 @@ export function IllustrationRoom() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SCENE 2 — Person sleeping in bed, zzz floating up
+   SCENE 2 — Adult face on pillow, eyes closing → sleep (zzz)
+   Animation: eyes open → half-close → fully closed → zzz float
    ═══════════════════════════════════════════════════════════════ */
 export function IllustrationSleep() {
+  const HAIR   = "#c07840";
+  const HAIR_D = "#8a5025";
+  const SKIN   = "rgba(255,226,202,0.96)";
+  const BLUSH  = "rgba(238,168,52,0.38)";
+  const LINE   = "#b05835";
+
+  // Timing: 0–20% open | 20–38% closing | 38–55% half-close | 55–75% closed+ZZZ | 75–100% open
+  const DUR = "7s";
   return (
     <svg viewBox="0 0 340 260" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full max-w-sm mx-auto">
       <SkFilter id="sk-sleep"/>
 
       <g filter="url(#sk-sleep)" strokeLinecap="round">
-        {/* Bed frame */}
-        <rect x="40" y="160" width="260" height="85" rx="8" fill={CREAM} stroke={K} strokeWidth="2.5"/>
-        {/* Headboard */}
-        <rect x="40" y="130" width="18" height="115" rx="6" fill={CREAM} stroke={K} strokeWidth="2.5"/>
-        <rect x="282" y="130" width="18" height="115" rx="6" fill={CREAM} stroke={K} strokeWidth="2.5"/>
-        <rect x="40" y="130" width="260" height="22" rx="8" fill={CREAM} stroke={K} strokeWidth="2.5"/>
-        {/* Pillow */}
-        <ellipse cx="130" cy="168" rx="62" ry="22" fill="white" stroke={K} strokeWidth="2"/>
-        {/* Blanket */}
-        <path d="M40 195 Q170 185 300 195 L300 245 Q170 252 40 245Z" fill={CREAM} stroke={K} strokeWidth="2"/>
-        {/* Head */}
-        <circle cx="130" cy="158" r="28" fill="rgba(255,230,200,0.9)" stroke={K} strokeWidth="2"/>
-        {/* Hair */}
-        <path d="M104 146 Q107 128 130 125 Q153 128 156 146" fill={K} opacity="0.85"/>
-        {/* Closed eyes */}
-        <path d="M116 156 Q130 150 144 156" stroke={K} strokeWidth="2" fill="none"/>
-        <path d="M118 162 Q130 158 142 162" stroke={K} strokeWidth="2" fill="none"/>
-        {/* Nose */}
-        <circle cx="130" cy="166" r="2.5" fill={K} opacity="0.4"/>
-        {/* Blanket fold detail */}
-        <path d="M60 205 Q170 198 280 205" stroke={K} strokeWidth="1" opacity="0.3"/>
-        {/* Floor */}
-        <line x1="0" y1="255" x2="340" y2="255" stroke={K} strokeWidth="2.5"/>
+        {/* ── Floor ── */}
+        <line x1="0" y1="257" x2="340" y2="257" stroke={K} strokeWidth="3"/>
+
+        {/* ── Blanket / sheet below pillow ── */}
+        <path d="M25 188 Q170 180 315 188 L315 257 Q170 263 25 257Z"
+          fill={CREAM} stroke={R} strokeWidth="2.2"/>
+        <path d="M25 200 Q170 195 315 200" stroke={R} strokeWidth="1.2" opacity="0.35"/>
+
+        {/* ── Pillow (wide, horizontal) ── */}
+        <rect x="48" y="120" width="244" height="78" rx="16"
+          fill="rgba(255,255,255,0.82)" stroke={R} strokeWidth="2.2"/>
+        <path d="M80 150 Q170 145 260 150" stroke={R} strokeWidth="1" opacity="0.28"/>
+
+        {/* ── Hair back mass (behind head) ── */}
+        <path d="M116 105 Q118 76 170 70 Q222 76 224 105
+                 Q212 95 204 102 Q196 109 188 102 Q180 95 172 102
+                 Q164 109 156 102 Q148 95 140 102 Q132 109 124 102 Z"
+          fill={HAIR}/>
+        {/* hair strand details */}
+        <path d="M140 88 Q148 78 158 75" stroke={HAIR_D} strokeWidth="1" fill="none"/>
+        <path d="M155 76 Q162 70 170 70" stroke={HAIR_D} strokeWidth="1" fill="none"/>
+        <path d="M170 70 Q178 70 185 76" stroke={HAIR_D} strokeWidth="1" fill="none"/>
+        <path d="M185 77 Q194 80 200 88" stroke={HAIR_D} strokeWidth="1" fill="none"/>
+
+        {/* ── Head (front-facing, resting on pillow) ── */}
+        <circle cx="170" cy="132" r="55"
+          fill={SKIN} stroke={LINE} strokeWidth="2.2"/>
+
+        {/* ── Ears ── */}
+        <path d="M115 122 Q104 124 106 138 Q108 150 119 147"
+          stroke={LINE} strokeWidth="1.8" fill="none"/>
+        <path d="M225 122 Q236 124 234 138 Q232 150 221 147"
+          stroke={LINE} strokeWidth="1.8" fill="none"/>
+
+        {/* ── Eyebrows ── */}
+        <path d="M133 110 Q150 104 167 109" stroke={HAIR_D} strokeWidth="2.0" fill="none"/>
+        <path d="M173 109 Q190 104 207 110" stroke={HAIR_D} strokeWidth="2.0" fill="none"/>
+
+        {/* ── Cheek blush ── */}
+        <circle cx="126" cy="142" r="18" fill={BLUSH} opacity="0.8"/>
+        <circle cx="214" cy="142" r="18" fill={BLUSH} opacity="0.8"/>
+
+        {/* ── OPEN EYES (fade out as sleeping) ── */}
+        <g>
+          <animate attributeName="opacity"
+            values="1;1;0;0;0;0;1"
+            keyTimes="0;0.18;0.32;0.55;0.75;0.88;1"
+            dur={DUR} repeatCount="indefinite"/>
+          <circle cx="150" cy="124" r="11" fill="#1a1212"/>
+          <circle cx="154" cy="120" r="4"  fill="white" opacity="0.75"/>
+          <circle cx="190" cy="124" r="11" fill="#1a1212"/>
+          <circle cx="194" cy="120" r="4"  fill="white" opacity="0.75"/>
+        </g>
+
+        {/* ── HALF-CLOSED EYES (brief transition) ── */}
+        <g opacity="0">
+          <animate attributeName="opacity"
+            values="0;0;1;1;0;0;0"
+            keyTimes="0;0.25;0.32;0.45;0.55;0.88;1"
+            dur={DUR} repeatCount="indefinite"/>
+          <ellipse cx="150" cy="127" rx="13" ry="5" fill="#1a1212"/>
+          <ellipse cx="190" cy="127" rx="13" ry="5" fill="#1a1212"/>
+        </g>
+
+        {/* ── CLOSED EYES arcs (like reference) ── */}
+        <g opacity="0">
+          <animate attributeName="opacity"
+            values="0;0;0;1;1;0;0"
+            keyTimes="0;0.42;0.52;0.58;0.78;0.88;1"
+            dur={DUR} repeatCount="indefinite"/>
+          <path d="M136 124 Q150 134 164 124" stroke={LINE} strokeWidth="2.6" fill="none" strokeLinecap="round"/>
+          <line x1="139" y1="123" x2="137" y2="118" stroke={LINE} strokeWidth="1.2"/>
+          <line x1="150" y1="121" x2="150" y2="116" stroke={LINE} strokeWidth="1.2"/>
+          <line x1="161" y1="123" x2="163" y2="118" stroke={LINE} strokeWidth="1.2"/>
+          <path d="M176 124 Q190 134 204 124" stroke={LINE} strokeWidth="2.6" fill="none" strokeLinecap="round"/>
+          <line x1="179" y1="123" x2="177" y2="118" stroke={LINE} strokeWidth="1.2"/>
+          <line x1="190" y1="121" x2="190" y2="116" stroke={LINE} strokeWidth="1.2"/>
+          <line x1="201" y1="123" x2="203" y2="118" stroke={LINE} strokeWidth="1.2"/>
+        </g>
+
+        {/* ── Nose ── */}
+        <circle cx="163" cy="140" r="2.5" fill={LINE} opacity="0.42"/>
+        <circle cx="177" cy="140" r="2.5" fill={LINE} opacity="0.42"/>
+
+        {/* ── Mouth (relaxed) ── */}
+        <path d="M156 154 Q170 162 184 154" stroke={LINE} strokeWidth="1.8" fill="none"/>
+
+        {/* ── Neck + shoulder hint ── */}
+        <line x1="154" y1="186" x2="148" y2="200" stroke={LINE} strokeWidth="2.5"/>
+        <line x1="186" y1="186" x2="192" y2="200" stroke={LINE} strokeWidth="2.5"/>
+        <path d="M148 200 Q170 206 192 200" stroke={LINE} strokeWidth="2" fill="none"/>
       </g>
 
-      {/* Animated zzz */}
-      <text x="165" y="130" fontSize="18" fontFamily="'Fredoka One',sans-serif" fontWeight="bold" fill={Y}>
-        Z
-        <animate attributeName="opacity" values="0;0;1;0" dur="3s" begin="0s" repeatCount="indefinite"/>
-        <animateTransform attributeName="transform" type="translate" from="0,0" to="12,-40" dur="3s" begin="0s" repeatCount="indefinite"/>
-      </text>
-      <text x="183" y="112" fontSize="24" fontFamily="'Fredoka One',sans-serif" fontWeight="bold" fill={Y}>
-        Z
-        <animate attributeName="opacity" values="0;0;1;0" dur="3s" begin="1s" repeatCount="indefinite"/>
-        <animateTransform attributeName="transform" type="translate" from="0,0" to="15,-50" dur="3s" begin="1s" repeatCount="indefinite"/>
-      </text>
-      <text x="203" y="92" fontSize="30" fontFamily="'Fredoka One',sans-serif" fontWeight="bold" fill={Y}>
-        Z
-        <animate attributeName="opacity" values="0;0;1;0" dur="3s" begin="2s" repeatCount="indefinite"/>
-        <animateTransform attributeName="transform" type="translate" from="0,0" to="18,-60" dur="3s" begin="2s" repeatCount="indefinite"/>
-      </text>
+      {/* ── ZZZ — float up only while eyes are closed ── */}
+      {([
+        { x: 208, y: 108, size: 16, kt: "0;0;0;0;0.9;0;0", delay: "0;0.52;0.56;0.60;0.68;0.76;1", tx: 6,  ty: -22 },
+        { x: 224, y:  90, size: 21, kt: "0;0;0;0;0;0.9;0", delay: "0;0.52;0.58;0.64;0.68;0.76;1", tx: 9,  ty: -32 },
+        { x: 244, y:  70, size: 28, kt: "0;0;0;0;0;0;0.9", delay: "0;0.52;0.60;0.66;0.70;0.78;1", tx: 12, ty: -44 },
+      ] as {x:number;y:number;size:number;kt:string;delay:string;tx:number;ty:number}[]).map((z, i) => (
+        <text key={i} x={z.x} y={z.y} fontSize={z.size}
+          fontFamily="Georgia, serif" fontWeight="bold" fill={Y} opacity="0">
+          z
+          <animate attributeName="opacity"
+            values={z.kt} keyTimes={z.delay} dur={DUR} repeatCount="indefinite"/>
+          <animateTransform attributeName="transform" type="translate"
+            from="0,0" to={`${z.tx},${z.ty}`} dur={DUR} repeatCount="indefinite"/>
+        </text>
+      ))}
     </svg>
   );
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SCENE 3 — Close-up blinking eyes
+   SCENE 3 — Same face as scene 2, blinking awake (3 quick blinks)
+   Face is identical to IllustrationSleep but eyes are OPEN,
+   blinking quickly 3 times then resting open.
    ═══════════════════════════════════════════════════════════════ */
 export function IllustrationEyes() {
+  // 9s loop: open(0–1s) → blink1(1–1.4s) → open(1.4–3s) → blink2(3–3.4s) → open(3.4–5.5s) → blink3(5.5–5.9s) → open(5.9–9s)
+  // Expressed as keyTimes over 9s total:
+  // blink = close(0.1s) + open(0.1s) = 0.2s each
+  const D = "9s";
+  // open=1, closed=0
+  // t:  0   /0.11 /0.15 /0.20 /0.33 /0.38 /0.42 /0.61 /0.65 /0.69 /1
+  const openVals  = "1;1;0;0;1;1;0;0;1;1;0;0;1;1";
+  const openTimes = "0;0.10;0.14;0.19;0.23;0.32;0.36;0.41;0.45;0.60;0.64;0.69;0.73;1";
+  const closeVals  = "0;0;1;1;0;0;1;1;0;0;1;1;0;0";
+  const closeTimes = openTimes;
+
   return (
     <svg viewBox="0 0 340 260" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full max-w-sm mx-auto">
-      <rect width="340" height="260" fill="rgba(255,248,235,0.5)"/>
       <SkFilter id="sk-eyes"/>
 
       <g filter="url(#sk-eyes)" strokeLinecap="round">
-        {/* Face hint */}
-        <path d="M50 200 Q170 240 290 200" stroke={K} strokeWidth="1" fill="none" opacity="0.15"/>
-        {/* Left eyebrow */}
-        <path d="M55 95 Q110 80 145 90" stroke={K} strokeWidth="3" fill="none"/>
-        {/* Right eyebrow */}
-        <path d="M195 90 Q230 80 285 95" stroke={K} strokeWidth="3" fill="none"/>
-        {/* Left eye white */}
-        <ellipse cx="110" cy="140" rx="60" ry="38" fill={W} stroke={K} strokeWidth="2.5"/>
-        {/* Right eye white */}
-        <ellipse cx="230" cy="140" rx="60" ry="38" fill={W} stroke={K} strokeWidth="2.5"/>
-        {/* Left iris */}
-        <circle cx="112" cy="143" r="22" fill="#3d2600"/>
-        {/* Right iris */}
-        <circle cx="232" cy="143" r="22" fill="#3d2600"/>
-        {/* Left pupil */}
-        <circle cx="114" cy="145" r="12" fill={K}/>
-        {/* Right pupil */}
-        <circle cx="234" cy="145" r="12" fill={K}/>
-        {/* Catchlights */}
-        <circle cx="120" cy="138" r="5" fill={W}/>
-        <circle cx="240" cy="138" r="5" fill={W}/>
-        {/* Left upper eyelashes */}
-        <line x1="70" y1="107" x2="68" y2="100" stroke={K} strokeWidth="1.5"/>
-        <line x1="88" y1="104" x2="87" y2="97" stroke={K} strokeWidth="1.5"/>
-        <line x1="107" y1="103" x2="107" y2="96" stroke={K} strokeWidth="1.5"/>
-        <line x1="126" y1="105" x2="127" y2="98" stroke={K} strokeWidth="1.5"/>
-        {/* Right upper eyelashes */}
-        <line x1="190" y1="104" x2="188" y2="97" stroke={K} strokeWidth="1.5"/>
-        <line x1="210" y1="103" x2="210" y2="96" stroke={K} strokeWidth="1.5"/>
-        <line x1="230" y1="103" x2="231" y2="96" stroke={K} strokeWidth="1.5"/>
-        <line x1="250" y1="105" x2="252" y2="98" stroke={K} strokeWidth="1.5"/>
-      </g>
+        {/* ── Floor ── */}
+        <line x1="0" y1="257" x2="340" y2="257" stroke={K} strokeWidth="3"/>
 
-      {/* Blink animation eyelids */}
-      <rect x="50" y="102" width="120" height="0" fill="rgba(255,220,185,0.95)" stroke={K} strokeWidth="1.5">
-        <animate attributeName="height" values="0;0;76;76;0; 0;76;76;0; 0;76;76;0" dur="6s" repeatCount="indefinite"/>
-      </rect>
-      <rect x="170" y="102" width="120" height="0" fill="rgba(255,220,185,0.95)" stroke={K} strokeWidth="1.5">
-        <animate attributeName="height" values="0;0;76;76;0; 0;76;76;0; 0;76;76;0" dur="6s" begin="0.05s" repeatCount="indefinite"/>
-      </rect>
-      {/* Lower face hint */}
-      <path d="M30 200 Q170 195 310 200" stroke={K} strokeWidth="1" opacity="0.15"/>
+        {/* ── Blanket / sheet ── */}
+        <path d="M25 188 Q170 180 315 188 L315 257 Q170 263 25 257Z"
+          fill={CREAM} stroke={R} strokeWidth="2.2"/>
+        <path d="M25 200 Q170 195 315 200" stroke={R} strokeWidth="1.2" opacity="0.35"/>
+
+        {/* ── Pillow ── */}
+        <rect x="48" y="120" width="244" height="78" rx="16"
+          fill="rgba(255,255,255,0.82)" stroke={R} strokeWidth="2.2"/>
+        <path d="M80 150 Q170 145 260 150" stroke={R} strokeWidth="1" opacity="0.28"/>
+
+        {/* ── Head (same as scene 2) ── */}
+        <circle cx="170" cy="132" r="56"
+          fill="rgba(255,225,195,0.93)" stroke={K} strokeWidth="2.5"/>
+
+        {/* ── Hair ── */}
+        <path d="M116 106 Q120 78 170 72 Q220 78 224 106
+                 Q212 96 204 103 Q196 110 188 103 Q180 96 172 103
+                 Q164 110 156 103 Q148 96 140 103 Q132 110 124 103 Z"
+          fill={K} opacity="0.88"/>
+
+        {/* ── Ears ── */}
+        <path d="M114 122 Q103 124 105 138 Q107 150 118 147"
+          stroke={K} strokeWidth="2.2" fill="none"/>
+        <path d="M226 122 Q237 124 235 138 Q233 150 222 147"
+          stroke={K} strokeWidth="2.2" fill="none"/>
+
+        {/* ── Eyebrows ── */}
+        <path d="M132 110 Q150 105 168 110" stroke={K} strokeWidth="2.2" fill="none"/>
+        <path d="M172 110 Q190 105 208 110" stroke={K} strokeWidth="2.2" fill="none"/>
+
+        {/* ── OPEN EYES (fade out on blink) ── */}
+        <g>
+          <animate attributeName="opacity" values={openVals} keyTimes={openTimes} dur={D} repeatCount="indefinite"/>
+          {/* Left eye */}
+          <ellipse cx="150" cy="124" rx="20" ry="14"
+            fill="rgba(255,255,255,0.92)" stroke={K} strokeWidth="1.8"/>
+          <circle cx="150" cy="124" r="9"  fill="#3a2000"/>
+          <circle cx="150" cy="124" r="5"  fill={K}/>
+          <circle cx="154" cy="120" r="3"  fill="rgba(255,255,255,0.9)"/>
+          {/* Right eye */}
+          <ellipse cx="190" cy="124" rx="20" ry="14"
+            fill="rgba(255,255,255,0.92)" stroke={K} strokeWidth="1.8"/>
+          <circle cx="190" cy="124" r="9"  fill="#3a2000"/>
+          <circle cx="190" cy="124" r="5"  fill={K}/>
+          <circle cx="194" cy="120" r="3"  fill="rgba(255,255,255,0.9)"/>
+        </g>
+
+        {/* ── CLOSED EYES (arc, shown on blink) ── */}
+        <g opacity="0">
+          <animate attributeName="opacity" values={closeVals} keyTimes={closeTimes} dur={D} repeatCount="indefinite"/>
+          <path d="M130 124 Q150 132 170 124" stroke={K} strokeWidth="2.5" fill="none"/>
+          <path d="M170 124 Q190 132 210 124" stroke={K} strokeWidth="2.5" fill="none"/>
+        </g>
+
+        {/* ── Nose ── */}
+        <path d="M162 140 Q170 147 178 140" stroke={K} strokeWidth="1.8" fill="none"/>
+
+        {/* ── Mouth (slight smile — waking up) ── */}
+        <path d="M156 154 Q170 162 184 154" stroke={K} strokeWidth="1.8" fill="none"/>
+
+        {/* ── Neck + shoulder hint ── */}
+        <line x1="154" y1="186" x2="148" y2="200" stroke={K} strokeWidth="3"/>
+        <line x1="186" y1="186" x2="192" y2="200" stroke={K} strokeWidth="3"/>
+        <path d="M148 200 Q170 206 192 200" stroke={K} strokeWidth="2.2" fill="none"/>
+      </g>
     </svg>
   );
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SCENE 4 — Child standing, shadowy background
+   SCENE 4 — Simple kid, blurry yellow-green blobs bg
+   Same SkFilter line-art style as city scene
    ═══════════════════════════════════════════════════════════════ */
 export function IllustrationChildShadow() {
   return (
     <svg viewBox="0 0 340 260" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full max-w-sm mx-auto">
+      <defs>
+        <filter id="blob-blur-cs4" x="-25%" y="-25%" width="150%" height="150%">
+          <feGaussianBlur stdDeviation="10"/>
+        </filter>
+      </defs>
       <SkFilter id="sk-childshadow"/>
 
-      {/* Background abstract shapes */}
-      <rect x="0" y="80" width="70" height="180" fill="rgba(180,160,80,0.18)"/>
-      <rect x="270" y="60" width="70" height="200" fill="rgba(180,160,80,0.15)"/>
-      <circle cx="80" cy="100" r="35" fill="rgba(140,130,70,0.12)"/>
-      <rect x="20" y="40" width="50" height="80" fill="rgba(160,150,70,0.1)"/>
-      <circle cx="260" cy="80" r="28" fill="rgba(140,130,60,0.1)"/>
-      <rect x="140" y="20" width="60" height="40" fill="rgba(160,150,80,0.08)"/>
-      <rect width="340" height="260" fill="rgba(200,190,130,0.08)"/>
+      {/* Left blobs */}
+      <ellipse cx="68"  cy="145" rx="68" ry="112" fill="rgba(185,210,58,0.55)"  filter="url(#blob-blur-cs4)"/>
+      <ellipse cx="52"  cy="120" rx="50" ry="80"  fill="rgba(155,185,38,0.45)"  filter="url(#blob-blur-cs4)"/>
+      <ellipse cx="80"  cy="170" rx="40" ry="58"  fill="rgba(132,162,25,0.38)"  filter="url(#blob-blur-cs4)"/>
+      {/* Right blobs */}
+      <ellipse cx="272" cy="145" rx="68" ry="112" fill="rgba(185,210,58,0.55)"  filter="url(#blob-blur-cs4)"/>
+      <ellipse cx="288" cy="120" rx="50" ry="80"  fill="rgba(155,185,38,0.45)"  filter="url(#blob-blur-cs4)"/>
+      <ellipse cx="260" cy="170" rx="40" ry="58"  fill="rgba(132,162,25,0.38)"  filter="url(#blob-blur-cs4)"/>
 
       <g filter="url(#sk-childshadow)" strokeLinecap="round">
-        {/* Ground */}
-        <line x1="0" y1="255" x2="340" y2="255" stroke={K} strokeWidth="2.5"/>
+        <line x1="0" y1="257" x2="340" y2="257" stroke={K} strokeWidth="2.5"/>
         {/* Head */}
-        <circle cx="170" cy="95" r="38" fill="rgba(255,230,200,0.9)" stroke={K} strokeWidth="2.5"/>
-        {/* Hair */}
-        <path d="M133 82 Q136 54 170 50 Q204 54 207 82" fill={K} opacity="0.88"/>
-        {/* Neck */}
-        <rect x="160" y="130" width="20" height="18" rx="6" fill="rgba(255,230,200,0.9)" stroke={K} strokeWidth="1.5"/>
-        {/* Body */}
-        <path d="M130 148 Q145 142 170 144 Q195 142 210 148 L205 210 Q170 215 135 210Z" fill={CREAM} stroke={K} strokeWidth="2"/>
-        {/* Arms */}
-        <line x1="130" y1="155" x2="105" y2="200" stroke={K} strokeWidth="8" strokeLinecap="round"/>
-        <line x1="210" y1="155" x2="235" y2="200" stroke={K} strokeWidth="8" strokeLinecap="round"/>
-        {/* Legs */}
-        <line x1="148" y1="210" x2="145" y2="255" stroke={K} strokeWidth="10" strokeLinecap="round"/>
-        <line x1="192" y1="210" x2="195" y2="255" stroke={K} strokeWidth="10" strokeLinecap="round"/>
+        <circle cx="170" cy="78" r="42" fill={CREAM} stroke={K} strokeWidth="2.2"/>
+        {/* Simple hair zigzag */}
+        <path d="M130 63 Q135 50 142 57 Q147 44 154 55 Q159 42 166 54 Q170 41 174 54 Q181 42 187 55 Q193 44 198 57 Q205 50 210 63"
+          stroke={K} strokeWidth="2" fill="none"/>
         {/* Eyes */}
-        <ellipse cx="157" cy="90" rx="8" ry="9" fill={W} stroke={K} strokeWidth="1.5"/>
-        <ellipse cx="183" cy="90" rx="8" ry="9" fill={W} stroke={K} strokeWidth="1.5"/>
-        <circle cx="158" cy="91" r="5" fill={K}/>
-        <circle cx="184" cy="91" r="5" fill={K}/>
+        <circle cx="157" cy="78" r="8" fill={W} stroke={K} strokeWidth="1.8"/>
+        <circle cx="183" cy="78" r="8" fill={W} stroke={K} strokeWidth="1.8"/>
+        <circle cx="157" cy="79" r="4" fill={K}/>
+        <circle cx="183" cy="79" r="4" fill={K}/>
+        {/* Nose dots */}
+        <circle cx="167" cy="92" r="1.8" fill={K} opacity="0.6"/>
+        <circle cx="173" cy="92" r="1.8" fill={K} opacity="0.6"/>
         {/* Smile */}
-        <path d="M158 110 Q170 118 182 110" stroke={K} strokeWidth="2" fill="none"/>
+        <path d="M154 103 Q170 115 186 103" stroke={K} strokeWidth="2.2" fill="none"/>
+        {/* Neck */}
+        <line x1="163" y1="118" x2="161" y2="130" stroke={K} strokeWidth="3"/>
+        <line x1="177" y1="118" x2="179" y2="130" stroke={K} strokeWidth="3"/>
+        {/* T-shirt yellow */}
+        <path d="M140 130 Q154 124 170 126 Q186 124 200 130 L197 186 Q170 192 143 186Z"
+          fill={Y} stroke={K} strokeWidth="2"/>
+        {/* Sleeves */}
+        <path d="M140 130 Q127 134 120 148 Q127 156 137 150 Q139 142 141 136Z"
+          fill={Y} stroke={K} strokeWidth="1.8"/>
+        <path d="M200 130 Q213 134 220 148 Q213 156 203 150 Q201 142 199 136Z"
+          fill={Y} stroke={K} strokeWidth="1.8"/>
+        {/* Arms */}
+        <line x1="122" y1="152" x2="114" y2="180" stroke={K} strokeWidth="4.5"/>
+        <circle cx="114" cy="184" r="7" fill={CREAM} stroke={K} strokeWidth="1.8"/>
+        <line x1="218" y1="152" x2="226" y2="180" stroke={K} strokeWidth="4.5"/>
+        <circle cx="226" cy="184" r="7" fill={CREAM} stroke={K} strokeWidth="1.8"/>
+        {/* Shorts blue */}
+        <path d="M143 186 Q156 181 170 183 Q184 181 197 186 L194 215 Q170 220 146 215Z"
+          fill="rgba(70,110,200,0.88)" stroke={K} strokeWidth="2"/>
+        <line x1="170" y1="182" x2="170" y2="215" stroke={K} strokeWidth="1.4" opacity="0.3"/>
+        {/* Legs */}
+        <line x1="153" y1="215" x2="151" y2="248" stroke={K} strokeWidth="5" strokeLinecap="round"/>
+        <line x1="187" y1="215" x2="189" y2="248" stroke={K} strokeWidth="5" strokeLinecap="round"/>
+        {/* Shoes black */}
+        <ellipse cx="149" cy="252" rx="16" ry="8" fill={K} stroke={K} strokeWidth="1.5"/>
+        <ellipse cx="191" cy="252" rx="16" ry="8" fill={K} stroke={K} strokeWidth="1.5"/>
       </g>
     </svg>
   );
@@ -323,70 +463,101 @@ export function IllustrationChildShadow() {
    SCENE 5 — Child face close-up, smiling, looking up
    ═══════════════════════════════════════════════════════════════ */
 export function IllustrationChildFace() {
+  const HAIR   = "#c07840";               // warm copper-brown hair base
+  const HAIR_D = "#8a5025";               // darker hair strand detail
+  const SKIN   = "rgba(255,226,202,0.96)";
+  const BLUSH  = "rgba(238,168,52,0.38)";
+  const LINE   = "#b05835";               // warm reddish-brown outline
+  const SHIRT  = "rgba(251,192,45,0.92)"; // yellow collar
+
+  // Blink: open 2s → close 0.3s → closed 1.2s → open 0.3s → open 1.2s loop (5s total)
+  const DUR   = "5s";
+  const KT    = "0;0.36;0.42;0.64;0.70;1";
+  const openV = "1;1;0;0;1;1";
+  const closV = "0;0;1;1;0;0";
+
   return (
     <svg viewBox="0 0 340 260" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full max-w-sm mx-auto">
       <SkFilter id="sk-childface"/>
 
       <g filter="url(#sk-childface)" strokeLinecap="round">
-        {/* Neck hint */}
-        <rect x="150" y="230" width="40" height="30" rx="8" fill="rgba(255,225,195,0.9)" stroke={K} strokeWidth="1.5"/>
-        {/* Head */}
-        <ellipse cx="170" cy="130" rx="120" ry="115" fill="rgba(255,225,195,0.92)" stroke={K} strokeWidth="2.8"/>
-        {/* Hair top */}
-        <path d="M52 110 Q55 30 170 22 Q285 30 288 110 Q250 45 170 42 Q90 45 52 110Z" fill={K} opacity="0.85"/>
-        {/* Hair sides */}
-        <path d="M52 110 Q38 130 42 160" stroke={K} strokeWidth="8" fill="none" strokeLinecap="round"/>
-        <path d="M288 110 Q302 130 298 160" stroke={K} strokeWidth="8" fill="none" strokeLinecap="round"/>
-        {/* Ears */}
-        <path d="M50 130 Q38 132 40 148 Q42 162 54 160" stroke={K} strokeWidth="2.2" fill="none"/>
-        <path d="M290 130 Q302 132 300 148 Q298 162 286 160" stroke={K} strokeWidth="2.2" fill="none"/>
-        {/* Left eye */}
-        <ellipse cx="122" cy="135" rx="32" ry="26" fill={W} stroke={K} strokeWidth="2.2"/>
-        <circle cx="120" cy="128" r="16" fill="#3d2600"/>
-        <circle cx="120" cy="128" r="9" fill={K}/>
-        <circle cx="126" cy="122" r="5" fill={W}/>
-        <line x1="94" y1="113" x2="91" y2="107" stroke={K} strokeWidth="1.5"/>
-        <line x1="105" y1="110" x2="103" y2="104" stroke={K} strokeWidth="1.5"/>
-        <line x1="116" y1="109" x2="115" y2="103" stroke={K} strokeWidth="1.5"/>
-        <line x1="127" y1="110" x2="127" y2="104" stroke={K} strokeWidth="1.5"/>
-        {/* Right eye */}
-        <ellipse cx="218" cy="135" rx="32" ry="26" fill={W} stroke={K} strokeWidth="2.2"/>
-        <circle cx="220" cy="128" r="16" fill="#3d2600"/>
-        <circle cx="220" cy="128" r="9" fill={K}/>
-        <circle cx="226" cy="122" r="5" fill={W}/>
-        <line x1="208" y1="110" x2="207" y2="104" stroke={K} strokeWidth="1.5"/>
-        <line x1="220" y1="109" x2="220" y2="103" stroke={K} strokeWidth="1.5"/>
-        <line x1="232" y1="110" x2="233" y2="104" stroke={K} strokeWidth="1.5"/>
-        <line x1="244" y1="113" x2="247" y2="107" stroke={K} strokeWidth="1.5"/>
-        {/* Eyebrows */}
-        <path d="M88 103 Q122 93 156 100" stroke={K} strokeWidth="3" fill="none"/>
-        <path d="M184 100 Q218 93 252 103" stroke={K} strokeWidth="3" fill="none"/>
-        {/* Nose */}
-        <path d="M162 158 Q170 165 178 158" stroke={K} strokeWidth="2" fill="none"/>
-        {/* Big smile */}
-        <path d="M98 178 Q170 215 242 178" stroke={K} strokeWidth="4" fill="none"/>
-        {/* Blush */}
-        <ellipse cx="88" cy="168" rx="28" ry="18" fill={R} fillOpacity="0.12"/>
-        <ellipse cx="252" cy="168" rx="28" ry="18" fill={R} fillOpacity="0.12"/>
-        {/* Teeth hint */}
-        <ellipse cx="170" cy="195" rx="38" ry="15" fill={W} opacity="0.7"/>
-      </g>
 
-      {/* Sparkle stars */}
-      {[[30,40],[310,35],[25,180],[320,175],[170,18]].map(([cx,cy],i)=>(
-        <g key={i}>
-          <line x1={cx-6} y1={cy} x2={cx+6} y2={cy} stroke={Y} strokeWidth="1.5">
-            <animate attributeName="opacity" values="0.2;1;0.2" dur={`${2+i*0.5}s`} repeatCount="indefinite"/>
-          </line>
-          <line x1={cx} y1={cy-6} x2={cx} y2={cy+6} stroke={Y} strokeWidth="1.5">
-            <animate attributeName="opacity" values="0.2;1;0.2" dur={`${2+i*0.5}s`} repeatCount="indefinite"/>
-          </line>
-          <circle cx={cx} cy={cy} r="3" fill={Y}>
-            <animate attributeName="r" values="2;4;2" dur={`${2+i*0.5}s`} repeatCount="indefinite"/>
-            <animate attributeName="opacity" values="0.3;1;0.3" dur={`${2+i*0.5}s`} repeatCount="indefinite"/>
-          </circle>
+        {/* ── Hair back mass (behind face) ── */}
+        <path
+          d="M92 152 Q76 108 84 64 Q98 22 132 12 Q152 6 170 6 Q188 6 208 12 Q242 22 256 64 Q264 108 248 152 Q218 128 170 126 Q122 128 92 152Z"
+          fill={HAIR}/>
+
+        {/* ── Ears ── */}
+        <ellipse cx="86" cy="140" rx="12" ry="15" fill={SKIN} stroke={LINE} strokeWidth="1.5"/>
+        <ellipse cx="254" cy="140" rx="12" ry="15" fill={SKIN} stroke={LINE} strokeWidth="1.5"/>
+
+        {/* ── Face oval ── */}
+        <ellipse cx="170" cy="142" rx="83" ry="86" fill={SKIN} stroke={LINE} strokeWidth="2"/>
+
+        {/* ── Hair front fringe (over forehead) ── */}
+        <path
+          d="M90 96 Q102 58 132 48 Q152 40 170 42 Q188 40 208 48 Q238 58 250 96 Q230 72 200 66 Q184 62 170 62 Q156 62 140 66 Q110 72 90 96Z"
+          fill={HAIR}/>
+
+        {/* ── Hair strand texture ── */}
+        <path d="M148 28 Q130 48 116 70" stroke={HAIR_D} strokeWidth="1.1" fill="none"/>
+        <path d="M156 24 Q140 44 128 62" stroke={HAIR_D} strokeWidth="1.0" fill="none"/>
+        <path d="M164 22 Q152 40 144 56" stroke={HAIR_D} strokeWidth="0.9" fill="none"/>
+        <path d="M96  62 Q84  82 78  106" stroke={HAIR_D} strokeWidth="1.0" fill="none"/>
+        <path d="M104 52 Q92  70 86  92"  stroke={HAIR_D} strokeWidth="0.9" fill="none"/>
+        <path d="M192 28 Q210 48 224 70" stroke={HAIR_D} strokeWidth="1.1" fill="none"/>
+        <path d="M184 24 Q200 44 212 62" stroke={HAIR_D} strokeWidth="1.0" fill="none"/>
+        <path d="M176 22 Q188 40 196 56" stroke={HAIR_D} strokeWidth="0.9" fill="none"/>
+        <path d="M244 62 Q256 82 262 106" stroke={HAIR_D} strokeWidth="1.0" fill="none"/>
+        <path d="M236 52 Q248 70 254 92"  stroke={HAIR_D} strokeWidth="0.9" fill="none"/>
+        <path d="M168 24 Q166 14 164 8" stroke={HAIR_D} strokeWidth="0.9" fill="none"/>
+        <path d="M172 24 Q174 14 176 8" stroke={HAIR_D} strokeWidth="0.9" fill="none"/>
+
+        {/* ── Eyebrows ── */}
+        <path d="M122 108 Q140 101 158 106" stroke={HAIR_D} strokeWidth="2.2" fill="none"/>
+        <path d="M182 106 Q200 101 218 108" stroke={HAIR_D} strokeWidth="2.2" fill="none"/>
+
+        {/* ── Cheek blush ── */}
+        <circle cx="114" cy="158" r="24" fill={BLUSH} opacity="0.85"/>
+        <circle cx="226" cy="158" r="24" fill={BLUSH} opacity="0.85"/>
+
+        {/* ── Eyes OPEN (fade out on blink) ── */}
+        <g>
+          <animate attributeName="opacity" values={openV} keyTimes={KT} dur={DUR} repeatCount="indefinite"/>
+          <circle cx="140" cy="134" r="12" fill="#1a1212"/>
+          <circle cx="144" cy="129" r="4"  fill="white" opacity="0.75"/>
+          <circle cx="200" cy="134" r="12" fill="#1a1212"/>
+          <circle cx="204" cy="129" r="4"  fill="white" opacity="0.75"/>
         </g>
-      ))}
+
+        {/* ── Eyes CLOSED arcs (fade in on blink) ── */}
+        <g>
+          <animate attributeName="opacity" values={closV} keyTimes={KT} dur={DUR} repeatCount="indefinite"/>
+          <path d="M127 134 Q140 146 153 134" stroke={LINE} strokeWidth="2.8" fill="none" strokeLinecap="round"/>
+          <line x1="130" y1="133" x2="128" y2="128" stroke={LINE} strokeWidth="1.2"/>
+          <line x1="140" y1="130" x2="140" y2="125" stroke={LINE} strokeWidth="1.2"/>
+          <line x1="150" y1="133" x2="152" y2="128" stroke={LINE} strokeWidth="1.2"/>
+          <path d="M187 134 Q200 146 213 134" stroke={LINE} strokeWidth="2.8" fill="none" strokeLinecap="round"/>
+          <line x1="190" y1="133" x2="188" y2="128" stroke={LINE} strokeWidth="1.2"/>
+          <line x1="200" y1="130" x2="200" y2="125" stroke={LINE} strokeWidth="1.2"/>
+          <line x1="210" y1="133" x2="212" y2="128" stroke={LINE} strokeWidth="1.2"/>
+        </g>
+
+        {/* ── Nose: two soft dots ── */}
+        <circle cx="162" cy="157" r="2.8" fill={LINE} opacity="0.45"/>
+        <circle cx="178" cy="157" r="2.8" fill={LINE} opacity="0.45"/>
+
+        {/* ── Smile ── */}
+        <path d="M148 172 Q170 186 192 172" stroke={LINE} strokeWidth="2.4" fill="none" strokeLinecap="round"/>
+
+        {/* ── Neck ── */}
+        <path d="M152 224 Q170 230 188 224 L190 260 L150 260Z" fill={SKIN}/>
+
+        {/* ── Yellow shirt collar ── */}
+        <path d="M106 258 Q148 235 170 240 Q192 235 234 258Z" fill={SHIRT} stroke={LINE} strokeWidth="1.5"/>
+        <path d="M158 240 Q170 252 182 240" stroke={LINE} strokeWidth="1.2" fill="none"/>
+
+      </g>
     </svg>
   );
 }
@@ -902,19 +1073,294 @@ export function IllustrationGiftGive() {
   );
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   SCENE 13 — Present PNG
+   ═══════════════════════════════════════════════════════════════ */
+export function IllustrationPresent() {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src="/present.png"
+      alt="present"
+      className="w-full max-w-sm mx-auto rounded-xl"
+      style={{ display: "block" }}
+    />
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SCENE 12 — Yellow room PNG
+   ═══════════════════════════════════════════════════════════════ */
+export function IllustrationYellowRoom() {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src="/yellow_room.png"
+      alt="yellow room"
+      className="w-full max-w-sm mx-auto rounded-xl"
+      style={{ display: "block" }}
+    />
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SCENE 11 — Door closing: door_3 → door_2 → door_1, stops on last
+   ═══════════════════════════════════════════════════════════════ */
+const DOOR_CLOSE_FRAMES = ["/door_3.png", "/door_2.png", "/door_1.png"];
+
+const DOOR_CLOSE_BRIGHTNESS = [1, 0.55, 0.15]; // brightness per step
+
+export function IllustrationDoorClosing() {
+  const [step, setStep] = useState(0);
+
+  useEffect(() => {
+    if (step >= DOOR_CLOSE_FRAMES.length - 1) return;
+    const t = setTimeout(() => setStep(s => s + 1), 1800);
+    return () => clearTimeout(t);
+  }, [step]);
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={DOOR_CLOSE_FRAMES[step]}
+      alt="door closing"
+      className="w-full max-w-sm mx-auto rounded-xl"
+      style={{
+        display: "block",
+        filter: `brightness(${DOOR_CLOSE_BRIGHTNESS[step]})`,
+        transition: "filter 1.6s ease",
+      }}
+    />
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SCENE 10 — Dark: cycles dark_1/2/3.png, stops on last
+   ═══════════════════════════════════════════════════════════════ */
+const DARK_FRAMES = ["/dark_1.png", "/dark_2.png", "/dark_3.png"];
+
+export function IllustrationDark() {
+  const [step, setStep] = useState(0);
+
+  useEffect(() => {
+    if (step >= DARK_FRAMES.length - 1) return;
+    const t = setTimeout(() => setStep(s => s + 1), 1800);
+    return () => clearTimeout(t);
+  }, [step]);
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={DARK_FRAMES[step]}
+      alt="fading dark"
+      className="w-full max-w-sm mx-auto rounded-xl"
+      style={{ display: "block" }}
+    />
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SCENE 9 — Cry: cycles cry_1/2/3.png, stops on last
+   ═══════════════════════════════════════════════════════════════ */
+const CRY_FRAMES = ["/cry_1.png", "/cry_2.png", "/cry_3.png"];
+
+export function IllustrationCry() {
+  const [step, setStep] = useState(0);
+
+  useEffect(() => {
+    if (step >= CRY_FRAMES.length - 1) return;
+    const t = setTimeout(() => setStep(s => s + 1), 1800);
+    return () => clearTimeout(t);
+  }, [step]);
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={CRY_FRAMES[step]}
+      alt="crying"
+      className="w-full max-w-sm mx-auto rounded-xl"
+      style={{ display: "block" }}
+    />
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SCENE 8 — Memory PNG
+   ═══════════════════════════════════════════════════════════════ */
+export function IllustrationMemory() {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src="/memory.png"
+      alt="memory"
+      className="w-full max-w-sm mx-auto rounded-xl"
+      style={{ display: "block" }}
+    />
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SCENE 7 — Door opening: fast cycle door_1/2/3, zoom in on last
+   ═══════════════════════════════════════════════════════════════ */
+const DOOR_FRAMES = ["/door_1.png", "/door_2.png", "/door_3.png"];
+
+export function IllustrationDoorOpening() {
+  const [step, setStep] = useState(0);
+
+  useEffect(() => {
+    if (step >= DOOR_FRAMES.length - 1) return;
+    const t = setTimeout(() => setStep(s => s + 1), 400);
+    return () => clearTimeout(t);
+  }, [step]);
+
+  const isLast = step === DOOR_FRAMES.length - 1;
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={DOOR_FRAMES[step]}
+      alt="door opening"
+      className="w-full max-w-sm mx-auto rounded-xl"
+      style={{
+        display: "block",
+        transform: isLast ? "scale(1.18)" : "scale(1)",
+        transition: isLast ? "transform 1.2s cubic-bezier(0.25,0.46,0.45,0.94)" : "none",
+        transformOrigin: "center center",
+      }}
+    />
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SCENE 6 — 5 doors PNG
+   ═══════════════════════════════════════════════════════════════ */
+export function IllustrationFiveDoors() {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src="/5_doors.png"
+      alt="5 doors"
+      className="w-full max-w-sm mx-auto rounded-xl"
+      style={{ display: "block" }}
+    />
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SCENE 5 — Boy smile: cycles boy_smile_1/2/3.png, stops on last
+   ═══════════════════════════════════════════════════════════════ */
+const BOY_SMILE_FRAMES = ["/boy_smile_1.png", "/boy_smile_2.png", "/boy_smile_3.png"];
+
+export function IllustrationBoySmile() {
+  const [step, setStep] = useState(0);
+
+  useEffect(() => {
+    if (step >= BOY_SMILE_FRAMES.length - 1) return;
+    const t = setTimeout(() => setStep(s => s + 1), 1800);
+    return () => clearTimeout(t);
+  }, [step]);
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={BOY_SMILE_FRAMES[step]}
+      alt="boy smiling"
+      className="w-full max-w-sm mx-auto rounded-xl"
+      style={{ display: "block" }}
+    />
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SCENE 4 — Little boy PNG
+   ═══════════════════════════════════════════════════════════════ */
+export function IllustrationLittleBoy() {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src="/littleboy.png"
+      alt="little boy"
+      className="w-full max-w-sm mx-auto rounded-xl"
+      style={{ display: "block" }}
+    />
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SCENE 3 — Waking up shock: cycles through 3 PNG frames, stops on last
+   ═══════════════════════════════════════════════════════════════ */
+const SHOCK_SEQUENCE = ["/shock_1.png", "/shock_2.png", "/shock_1.png", "/shock_2.png", "/shock_3.png"];
+const SHOCK_DELAYS   = [900, 900, 900, 1800]; // delay before advancing to next step
+
+export function IllustrationShock() {
+  const [step, setStep] = useState(0);
+
+  useEffect(() => {
+    if (step >= SHOCK_SEQUENCE.length - 1) return;
+    const t = setTimeout(() => setStep(s => s + 1), SHOCK_DELAYS[step]);
+    return () => clearTimeout(t);
+  }, [step]);
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={SHOCK_SEQUENCE[step]}
+      alt="waking up"
+      className="w-full max-w-sm mx-auto rounded-xl"
+      style={{ display: "block" }}
+    />
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SCENE 2 — Man sleeping: cycles through 3 PNG frames, stops on last
+   ═══════════════════════════════════════════════════════════════ */
+const SLEEP_FRAMES = ["/man_sleep_1.png", "/man_sleep_2.png", "/man_sleep_3.png"];
+const FRAME_INTERVAL = 1800; // ms per frame
+
+export function IllustrationManSleep() {
+  const [frame, setFrame] = useState(0);
+  const [done, setDone] = useState(false);
+
+  useEffect(() => {
+    if (done) return;
+    const t = setInterval(() => {
+      setFrame(f => {
+        const next = f + 1;
+        if (next >= SLEEP_FRAMES.length - 1) {
+          setDone(true);
+          return SLEEP_FRAMES.length - 1;
+        }
+        return next;
+      });
+    }, FRAME_INTERVAL);
+    return () => clearInterval(t);
+  }, [done]);
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={SLEEP_FRAMES[frame]}
+      alt="sleeping"
+      className="w-full max-w-sm mx-auto rounded-xl"
+      style={{ display: "block" }}
+    />
+  );
+}
+
 export const ILLUSTRATIONS = [
   IllustrationCity,        // 0
   IllustrationRoom,        // 1
-  IllustrationSleep,       // 2
-  IllustrationEyes,        // 3
-  IllustrationChildShadow, // 4
-  IllustrationChildFace,   // 5
-  IllustrationDoors,       // 6
-  IllustrationDoorOpen,    // 7
-  IllustrationGlow,        // 8
-  IllustrationTears,       // 9
-  IllustrationTalking,     // 10
-  IllustrationDoorClose,   // 11
-  IllustrationWhiteRoom,   // 12
-  IllustrationGiftGive,    // 13
+  IllustrationManSleep,    // 2
+  IllustrationShock,       // 3
+  IllustrationLittleBoy,   // 4
+  IllustrationBoySmile,    // 5
+  IllustrationFiveDoors,   // 6
+  IllustrationDoorOpening, // 7
+  IllustrationMemory,      // 8
+  IllustrationCry,         // 9
+  IllustrationDark,        // 10
+  IllustrationDoorClosing, // 11
+  IllustrationYellowRoom,  // 12
+  IllustrationPresent,     // 13
 ];

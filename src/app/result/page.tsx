@@ -69,63 +69,22 @@ const CAKES: Record<CakeType, {
   },
 };
 
-// ── Mini cartoon cake SVGs ────────────────────────────────────────────────────
+// ── Cake images (pre-cropped PNGs in /public) ────────────────────────────────
 function CakeSVG({ type }: { type: CakeType }) {
-  const configs: Record<CakeType, { fill: string; accent: string; top: string }> = {
-    vanilla:   { fill: "#FFF4D6", accent: Y,        top: "#FFFDE7" },
-    matcha:    { fill: "#1B4332", accent: "#52b788", top: "#2D6A4F" },
-    chocolate: { fill: "#3E1F00", accent: "#8B4513", top: "#5C2D0A" },
-    strawberry:{ fill: R,         accent: "#FF6B6B", top: "#FF4040" },
-    cookie:    { fill: "#5C3D2E", accent: "#D2691E", top: "#3E2000" },
+  const src: Record<CakeType, string> = {
+    vanilla:    "/vanila.png",
+    matcha:     "/matcha.png",
+    chocolate:  "/chocolate.png",
+    strawberry: "/strawberry.png",
+    cookie:     "/cookie_and_cream.png",
   };
-  const c = configs[type];
 
   return (
-    <svg viewBox="0 0 160 180" width="160" height="180" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <filter id="sk-cake" x="-8%" y="-8%" width="116%" height="116%">
-          <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" seed="11"/>
-          <feDisplacementMap in="SourceGraphic" scale="2"/>
-        </filter>
-      </defs>
-      <g filter="url(#sk-cake)" strokeLinecap="round">
-        {/* bottom tier */}
-        <rect x="10" y="115" width="140" height="52" rx="12" fill={c.fill} stroke={R} strokeWidth="2.5"/>
-        {/* frosting drips */}
-        <path d="M18 115 Q24 103 30 115 Q36 103 42 115 Q48 103 54 115 Q60 103 66 115 Q72 103 78 115 Q84 103 90 115 Q96 103 102 115 Q108 103 114 115 Q120 103 126 115 Q132 103 138 115 Q143 103 142 115"
-          stroke="white" strokeWidth="3" fill="none" opacity="0.7"/>
-        {/* dots */}
-        {[25,45,65,85,105,125].map((x,i)=>(
-          <circle key={i} cx={x} cy={143} r="3.5" fill={c.accent} opacity="0.85"/>
-        ))}
-
-        {/* middle tier */}
-        <rect x="28" y="70" width="104" height="50" rx="10" fill={c.top} stroke={R} strokeWidth="2.5"/>
-        <path d="M34 70 Q40 59 46 70 Q52 59 58 70 Q64 59 70 70 Q76 59 82 70 Q88 59 94 70 Q100 59 106 70 Q112 59 118 70 Q124 59 126 70"
-          stroke="white" strokeWidth="2.5" fill="none" opacity="0.7"/>
-        {[40,60,80,100,118].map((x,i)=>(
-          <circle key={i} cx={x} cy={96} r="3" fill={c.accent} opacity="0.8"/>
-        ))}
-
-        {/* top tier */}
-        <rect x="46" y="34" width="68" height="40" rx="8" fill={c.fill} stroke={R} strokeWidth="2.5"/>
-        <path d="M52 34 Q57 24 62 34 Q67 24 72 34 Q77 24 82 34 Q87 24 92 34 Q97 24 106 34"
-          stroke="white" strokeWidth="2" fill="none" opacity="0.7"/>
-
-        {/* whipped cream */}
-        <ellipse cx="80" cy="30" rx="24" ry="10" fill="white" opacity="0.9" stroke={R} strokeWidth="1.5"/>
-        <path d="M80 16 Q87 22 90 28 Q83 25 80 28 Q77 25 70 28 Q73 22 80 16Z" fill="white" stroke={R} strokeWidth="1.2"/>
-
-        {/* candle */}
-        <rect x="75" y="2"  width="10" height="18" rx="4" fill={Y} stroke={R} strokeWidth="1.5"/>
-        {/* flame */}
-        <path d="M80 0 Q86 -5 84 2 Q80 6 76 2 Q74 -5 80 0Z" fill={Y} stroke={R} strokeWidth="1">
-          <animate attributeName="d"
-            values="M80 0 Q86 -5 84 2 Q80 6 76 2 Q74 -5 80 0Z;M80 -2 Q88 -7 85 1 Q80 5 75 1 Q72 -7 80 -2Z;M80 0 Q86 -5 84 2 Q80 6 76 2 Q74 -5 80 0Z"
-            dur="0.8s" repeatCount="indefinite"/>
-        </path>
-      </g>
-    </svg>
+    <img
+      src={src[type]}
+      alt={type}
+      style={{ width: 360, height: 360, objectFit: "contain" }}
+    />
   );
 }
 

@@ -197,7 +197,7 @@ function QuestionScreen({
 
 // ── Ending screen ─────────────────────────────────────────────────────────────
 function EndingScreen({ name, onReveal }: { name: string; onReveal: () => void }) {
-  const IllusGift = ILLUSTRATIONS[4];
+  const IllusGift = ILLUSTRATIONS[13];
   const lines = [
     `${name} …`, "",
     "อย่าลืมที่จะให้รางวัลตัวเองบ้างนะ", "",
@@ -282,8 +282,9 @@ export default function QuizPage() {
   // Snore when on sleeping scene
   useEffect(() => {
     if (phase === "beats" && beatIdx === 2) {
-      const t = setTimeout(() => window.dispatchEvent(new CustomEvent("game-sfx",{detail:"snore"})), 1200);
-      return () => clearTimeout(t);
+      const t1 = setTimeout(() => window.dispatchEvent(new CustomEvent("game-sfx",{detail:"snore"})), 1200);
+      const t2 = setTimeout(() => window.dispatchEvent(new CustomEvent("game-sfx",{detail:"snore"})), 3000);
+      return () => { clearTimeout(t1); clearTimeout(t2); };
     }
   }, [phase, beatIdx]);
 
