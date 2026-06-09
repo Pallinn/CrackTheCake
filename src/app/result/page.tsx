@@ -347,11 +347,33 @@ function ShareBar({ type, name, cake }: { type: CakeType; name: string; cake: Ca
     : "https://crackthecake.vercel.app/quiz";
 
   const saveImage = async () => {
+    showToast("⏳ กำลังสร้างรูป...");
     const dataUrl = await generateShareImage(type, name, cake);
+
+    // Convert dataURL → Blob → File
+    const res  = await fetch(dataUrl);
+    const blob = await res.blob();
+    const file = new File([blob], `crackthecake-${type}.png`, { type: "image/png" });
+
+    // Try Web Share API first (works on iOS & Android)
+    if (navigator.canShare?.({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: "CrackTheCake" });
+        return;
+      } catch (e) {
+        // user cancelled — fall through
+        if ((e as Error).name === "AbortError") return;
+      }
+    }
+
+    // Desktop / browsers without file sharing → trigger download
     const a = document.createElement("a");
-    a.href     = dataUrl;
+    a.href     = URL.createObjectURL(blob);
     a.download = `crackthecake-${type}.png`;
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
     showToast("💾 บันทึกรูปแล้ว!");
   };
 
