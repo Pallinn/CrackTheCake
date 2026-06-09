@@ -4,12 +4,6 @@ import { useRouter } from "next/navigation";
 import { FloatingDecorations } from "@/components/FloatingDecorations";
 import { HeroIllustration } from "@/components/HeroIllustration";
 
-const PERSONALITY_BADGES = [
-  { label: "The Dreamer", emoji: "🌙", color: "#C62828" },
-  { label: "The Creator", emoji: "✨", color: "#D32F2F" },
-  { label: "The Guardian", emoji: "🌿", color: "#6B8C5A" },
-  { label: "The Explorer", emoji: "🔥", color: "#FBC02D" },
-];
 
 export default function HomePage() {
   const router = useRouter();
@@ -61,21 +55,13 @@ export default function HomePage() {
           <div className="p-4 pb-2">
             <HeroIllustration />
           </div>
-          <div className="flex flex-wrap justify-center gap-2 px-4 pb-5 pt-1">
-            {PERSONALITY_BADGES.map((badge) => (
-              <div key={badge.label} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-transform hover:scale-105 cursor-default" style={{ background: "white", border: `2px solid ${badge.color}`, color: badge.color, boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
-                <span>{badge.emoji}</span>
-                {badge.label}
-              </div>
-            ))}
-          </div>
         </div>
 
         {/* Subtitle */}
         <p className="text-center text-base leading-relaxed mb-8 animate-slide-up delay-400 max-w-sm" style={{ color: "#7A5C50", fontWeight: 600 }}>
-          Answer a few simple questions and discover your unique personality.
+          ตอบคำถามง่ายๆ แล้วค้นพบบุคลิกภาพที่ไม่เหมือนใครของคุณ
           <br />
-          <span style={{ color: "#C62828" }}>Takes only 5 minutes.</span>
+          <span style={{ color: "#C62828" }}>ใช้เวลาเพียง 5 นาที</span>
         </p>
 
         {/* CTA */}
@@ -91,7 +77,7 @@ export default function HomePage() {
         </div>
 
         <p className="text-xs text-center animate-slide-up delay-600" style={{ color: "#B09080" }}>
-          This quiz is for entertainment purposes only.
+          แบบทดสอบนี้จัดทำขึ้นเพื่อความบันเทิงเท่านั้น
         </p>
       </main>
 
