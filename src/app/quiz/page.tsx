@@ -58,9 +58,12 @@ function WarningScreen({ onNext }: { onNext: () => void }) {
 }
 
 // ── Name entry ───────────────────────────────────────────────────────────────
+const SEX_OPTIONS = ["ชาย", "หญิง", "เพศทางเลือก", "ไม่ระบุ"] as const;
+
 function NameScreen({ onNext }: { onNext: (name: string) => void }) {
   const [name, setName] = useState("");
   const [age,  setAge]  = useState("");
+  const [sex,  setSex]  = useState("");
 
   return (
     <div className="flex items-center justify-center min-h-screen p-6 paper-bg">
@@ -78,6 +81,26 @@ function NameScreen({ onNext }: { onNext: (name: string) => void }) {
             <label className="story-text text-base font-semibold block mb-2" style={{ color: "#C62828" }}>อายุ</label>
             <input value={age} onChange={e => setAge(e.target.value)}
               className="sketch-input" placeholder="อายุของคุณ" type="number"/>
+          </div>
+          <div>
+            <label className="story-text text-base font-semibold block mb-2" style={{ color: "#C62828" }}>เพศ</label>
+            <div className="flex flex-wrap gap-2">
+              {SEX_OPTIONS.map(opt => (
+                <button
+                  key={opt}
+                  type="button"
+                  onClick={() => setSex(opt)}
+                  className="px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200"
+                  style={{
+                    fontFamily: "'Sarabun', sans-serif",
+                    border: `2px solid ${sex === opt ? "#C62828" : "rgba(198,40,40,0.3)"}`,
+                    background: sex === opt ? "#C62828" : "transparent",
+                    color: sex === opt ? "#fff" : "#C62828",
+                  }}>
+                  {opt}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
         <p className="text-center text-xs mb-6 opacity-50 story-text">*เว็บนี้ไม่มีการเก็บข้อมูลของคุณ</p>
@@ -133,10 +156,10 @@ function SceneScreen({
 
 // ── Question screen ───────────────────────────────────────────────────────────
 function QuestionScreen({
-  beat, qNum, totalQ, illustIdx, onAnswer,
+  beat, illustIdx, onAnswer,
 }: {
   beat: Extract<Beat, { kind: "question" }>;
-  qNum: number; totalQ: number; illustIdx: number;
+  illustIdx: number;
   onAnswer: (cake: CakeType) => void;
 }) {
   const [selected, setSelected] = useState<CakeType | null>(null);
@@ -148,17 +171,6 @@ function QuestionScreen({
 
         {/* Illustration */}
         <div className="animate-fade-blur-in w-full mb-5"><Illus/></div>
-
-        {/* Progress dots */}
-        <div className="flex items-center gap-2 mb-5">
-          <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(198,40,40,0.12)" }}>
-            <div className="h-full rounded-full transition-all duration-700"
-              style={{ width: `${(qNum / totalQ) * 100}%`, background: "linear-gradient(90deg,#C62828,#FBC02D)" }}/>
-          </div>
-          <span className="text-xs font-bold" style={{ color: "#C62828", fontFamily: "'Sarabun',sans-serif" }}>
-            {qNum}/{totalQ}
-          </span>
-        </div>
 
         {/* Question text */}
         <p className="story-text text-base font-semibold mb-5 leading-relaxed whitespace-pre-line"
@@ -339,8 +351,6 @@ export default function QuizPage() {
       return (
         <QuestionScreen
           beat={beat}
-          qNum={answeredSoFar + 1}
-          totalQ={totalQ}
           illustIdx={beat.illus}
           onAnswer={handleAnswer}
         />

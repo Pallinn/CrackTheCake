@@ -23,11 +23,8 @@ export default function HomePage() {
       {/* Top nav — no Free Quiz badge */}
       <nav className="relative z-10 w-full max-w-lg flex items-center justify-start px-6 pt-6 pb-2">
         <div className="flex items-center gap-2">
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-sm" style={{ background: "#C62828" }}>
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-              <path d="M9 2 C9 2 4 5.5 4 9.5 C4 12.5 6.2 15 9 15 C11.8 15 14 12.5 14 9.5 C14 5.5 9 2 9 2Z" fill="white"/>
-              <circle cx="9" cy="9.5" r="2.5" fill="#FFD54F"/>
-            </svg>
+          <div className="w-9 h-9 flex items-center justify-center">
+            <img src="/logo_cake.png" alt="CrackTheCake logo" className="w-9 h-9 object-contain" />
           </div>
           <span className="font-black tracking-tight text-lg" style={{ fontFamily: "'Fredoka One', cursive", color: "#C62828" }}>
             CrackTheCake
